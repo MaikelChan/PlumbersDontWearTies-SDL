@@ -331,7 +331,7 @@ void Game::SetNextScene(const _actionDef* action)
 		nextSceneIndex = GetSceneIndexFromID(id);
 	}
 
-	SDL_Log("Previous scene %s, index %i", gameData->scenes[currentSceneIndex].szSceneFolder, currentSceneIndex);
+	//SDL_Log("Previous scene %s, index %i", gameData->scenes[currentSceneIndex].szSceneFolder, currentSceneIndex);
 
 	if (gameData->scenes[currentSceneIndex].numActions > 1) lastDecisionSceneIndex = currentSceneIndex;
 	currentSceneIndex = nextSceneIndex;
@@ -474,7 +474,7 @@ bool Game::PrintText(const char* text, ...)
 
 	if (textFont == nullptr)
 	{
-		SDL_Log(finalText);
+		SDL_Log("%s", finalText);
 		return false;
 	}
 
