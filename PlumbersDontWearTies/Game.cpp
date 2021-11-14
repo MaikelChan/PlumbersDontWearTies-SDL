@@ -5,7 +5,9 @@ Game::Game(SDL_Renderer* renderer)
 	// Initialize class variables
 
 	baseDataPath = "Data";
-	baseDataPath = baseDataPath.append(PATH_SEPARATOR);
+	pathSeparator = "/";
+	baseDataPath = baseDataPath + pathSeparator;
+
 	gameData = nullptr;
 
 	Game::renderer = renderer;
@@ -151,10 +153,11 @@ void Game::Update(const double deltaSeconds)
 		}
 		case GameStates::BeginScene:
 		{
-			std::string wavPath = baseDataPath + scene->szSceneFolder + PATH_SEPARATOR + scene->szDialogWav;
-			LoadAudioFromWAV(wavPath);
+			SDL_Log("Entered scene %s.", scene->szSceneFolder);
 
-			SDL_Log("Loaded scene %s, playing %s audio file...", scene->szSceneFolder, scene->szDialogWav);
+			std::string wavPath = scene->szSceneFolder + pathSeparator + scene->szDialogWav;
+			if (LoadAudioFromWAV(wavPath))
+				SDL_Log("Playing %s audio file...", scene->szDialogWav);
 
 			currentPictureIndex = 0;
 			currentGameState = GameStates::BeginPicture;
@@ -163,12 +166,12 @@ void Game::Update(const double deltaSeconds)
 		case GameStates::BeginPicture:
 		{
 			_pictureDef* picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
-			std::string bmpPath = baseDataPath + scene->szSceneFolder + PATH_SEPARATOR + picture->szBitmapFile;
-			LoadTextureFromBMP(bmpPath);
+			std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
+			if (LoadTextureFromBMP(bmpPath))
+				SDL_Log("Loaded picture %s", bmpPath.c_str());
 
 			currentWaitTimer = picture->duration / 10.0;
-
-			SDL_Log("Loaded picture %s, waiting %f seconds...", picture->szBitmapFile, currentWaitTimer);
+			SDL_Log("Waiting %f seconds...", currentWaitTimer);
 
 			currentGameState = GameStates::WaitingPicture;
 			break;
@@ -196,8 +199,9 @@ void Game::Update(const double deltaSeconds)
 				break;
 			}
 
-			std::string bmpPath = baseDataPath + scene->szSceneFolder + PATH_SEPARATOR + scene->szDecisionBmp;
-			LoadTextureFromBMP(bmpPath);
+			std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
+			if (LoadTextureFromBMP(bmpPath))
+				SDL_Log("Loaded picture %s", bmpPath.c_str());
 
 			PrintText("Your score is: %i", currentScore);
 
@@ -352,7 +356,7 @@ int16_t Game::GetSceneIndexFromID(const int16_t id)
 	return 0;
 }
 
-void Game::LoadTextureFromBMP(const std::string fileName)
+bool Game::LoadTextureFromBMP(std::string fileName)
 {
 	if (currentTexture != nullptr)
 	{
@@ -360,12 +364,13 @@ void Game::LoadTextureFromBMP(const std::string fileName)
 		currentTexture = nullptr;
 	}
 
-	SDL_Surface* bmpSurface = SDL_LoadBMP(fileName.c_str());
+	ToUpperCase(&fileName);
+	SDL_Surface* bmpSurface = SDL_LoadBMP((baseDataPath + fileName).c_str());
 
 	if (bmpSurface == nullptr)
 	{
 		SDL_LogError(0, "Can't load bitmap: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
@@ -376,20 +381,21 @@ void Game::LoadTextureFromBMP(const std::string fileName)
 	if (newTexture == nullptr)
 	{
 		SDL_LogError(0, "Can't create texture: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	if (SDL_QueryTexture(newTexture, NULL, NULL, &currentTextureWidth, &currentTextureHeight) < 0)
 	{
 		SDL_DestroyTexture(newTexture);
 		SDL_LogError(0, "Can't query texture: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	currentTexture = newTexture;
+	return true;
 }
 
-void Game::LoadAudioFromWAV(const std::string fileName)
+bool Game::LoadAudioFromWAV(std::string fileName)
 {
 	if (currentAudioDeviceId > 0)
 	{
@@ -406,17 +412,18 @@ void Game::LoadAudioFromWAV(const std::string fileName)
 	if (fileName.empty())
 	{
 		SDL_Log("Audio has been interrupted.");
-		return;
+		return true;
 	}
 
 	SDL_AudioSpec wavSpec;
 	uint8_t* wavBuffer;
 	uint32_t wavLength;
 
-	if (SDL_LoadWAV(fileName.c_str(), &wavSpec, &wavBuffer, &wavLength) == nullptr)
+	ToUpperCase(&fileName);
+	if (SDL_LoadWAV((baseDataPath + fileName).c_str(), &wavSpec, &wavBuffer, &wavLength) == nullptr)
 	{
 		SDL_LogError(0, "Can't load audio file: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
@@ -425,7 +432,7 @@ void Game::LoadAudioFromWAV(const std::string fileName)
 	{
 		SDL_FreeWAV(wavBuffer);
 		SDL_LogError(0, "Can't open audio device: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	if (SDL_QueueAudio(deviceId, wavBuffer, wavLength) < 0)
@@ -433,13 +440,14 @@ void Game::LoadAudioFromWAV(const std::string fileName)
 		SDL_FreeWAV(wavBuffer);
 		SDL_CloseAudioDevice(deviceId);
 		SDL_LogError(0, "Can't enqueue audio: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	currentAudioDeviceId = deviceId;
 	currentAudioBuffer = wavBuffer;
 
 	SDL_PauseAudioDevice(deviceId, 0);
+	return true;
 }
 
 void Game::PrintText(const char* text, ...)
@@ -494,4 +502,10 @@ void Game::PrintText(const char* text, ...)
 	currentTextTexture = textTexture;
 	currentTextTextureWidth = w;
 	currentTextTextureHeight = h;
+}
+
+void Game::ToUpperCase(std::string* text)
+{
+	for (auto &c : *text)
+		c = toupper(c);
 }

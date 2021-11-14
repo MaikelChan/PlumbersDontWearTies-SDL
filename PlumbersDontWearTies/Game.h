@@ -8,8 +8,6 @@
 
 #include "GameData.h"
 
-#define PATH_SEPARATOR "/"
-
 enum class GameStates
 {
 	Stopped,
@@ -24,6 +22,8 @@ class Game
 {
 private:
 	std::string baseDataPath;
+	std::string pathSeparator;
+
 	_gameBinFile* gameData;
 
 	SDL_Renderer* renderer;
@@ -67,7 +67,8 @@ public:
 private:
 	void SetNextScene(const _actionDef* action);
 	int16_t GetSceneIndexFromID(const int16_t id);
-	void LoadTextureFromBMP(const std::string fileName);
-	void LoadAudioFromWAV(const std::string fileName);
+	bool LoadTextureFromBMP(std::string fileName);
+	bool LoadAudioFromWAV(std::string fileName);
 	void PrintText(const char* text, ...);
+	void ToUpperCase(std::string* text);
 };
