@@ -9,3 +9,10 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+# Generated folders
+bin/
+build/
+
+# Dependencies
+SDL2/
