@@ -450,7 +450,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 	return true;
 }
 
-void Game::PrintText(const char* text, ...)
+bool Game::PrintText(const char* text, ...)
 {
 	if (currentTextTexture != nullptr)
 	{
@@ -463,7 +463,7 @@ void Game::PrintText(const char* text, ...)
 	if (strlen(text) == 0)
 	{
 		SDL_Log("Text has been cleared.");
-		return;
+		return true;
 	}
 
 	va_list args;
@@ -472,13 +472,19 @@ void Game::PrintText(const char* text, ...)
 	vsprintf(finalText, text, args);
 	va_end(args);
 
+	if (textFont == nullptr)
+	{
+		SDL_Log(finalText);
+		return false;
+	}
+
 	SDL_Color White = { 255, 255, 255, 255 };
 	SDL_Surface* textSurface = TTF_RenderText_Blended(textFont, finalText, White);
 
 	if (textSurface == nullptr)
 	{
 		SDL_LogError(0, "Can't create text surface: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -488,7 +494,7 @@ void Game::PrintText(const char* text, ...)
 	if (textTexture == nullptr)
 	{
 		SDL_LogError(0, "Can't create text texture: %s", SDL_GetError());
-		return;
+		return false;
 	}
 
 	int32_t w, h;
@@ -496,12 +502,14 @@ void Game::PrintText(const char* text, ...)
 	{
 		SDL_DestroyTexture(textTexture);
 		SDL_LogError(0, "Can't calculate size of text texture: %s", TTF_GetError());
-		return;
+		return false;
 	}
 
 	currentTextTexture = textTexture;
 	currentTextTextureWidth = w;
 	currentTextTextureHeight = h;
+
+	return true;
 }
 
 void Game::ToUpperCase(std::string* text)
