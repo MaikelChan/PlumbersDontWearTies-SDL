@@ -10,9 +10,12 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
-# Generated folders
+# Generated folders and files
+.vs/
 bin/
 build/
+
+CMakeSettings.json
 
 # Dependencies
 SDL2/

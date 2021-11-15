@@ -1,5 +1,7 @@
 #include "Game.h"
 
+#include <fstream>
+
 Game::Game(SDL_Renderer* renderer)
 {
 	// Initialize class variables
@@ -51,17 +53,17 @@ Game::Game(SDL_Renderer* renderer)
 
 	// Load GAME.BIN
 
-	std::string gameBinPath = baseDataPath + "GAME.BIN";
-	FILE* gameDataFileHandle = fopen(gameBinPath.c_str(), "rb");
-	if (gameDataFileHandle == nullptr)
+	std::ifstream gameBinStream(baseDataPath + "GAME.BIN", std::ios::binary);
+
+	if (!gameBinStream.is_open())
 	{
 		SDL_LogCritical(0, "GAME.BIN has not been found.");
 		return;
 	}
 
 	gameData = new _gameBinFile;
-	fread(gameData, sizeof(_gameBinFile), 1, gameDataFileHandle);
-	fclose(gameDataFileHandle);
+	gameBinStream.read((char*)gameData, sizeof(_gameBinFile));
+	gameBinStream.close();
 }
 
 Game::~Game()
@@ -203,7 +205,7 @@ void Game::Update(const double deltaSeconds)
 			if (LoadTextureFromBMP(bmpPath))
 				SDL_Log("Loaded picture %s", bmpPath.c_str());
 
-			PrintText("Your score is: %i", currentScore);
+			PrintText("Your score is: " + std::to_string(currentScore));
 
 			SDL_Log("%i decisions to choose, waiting for player input...", scene->numActions);
 
@@ -217,7 +219,7 @@ void Game::Update(const double deltaSeconds)
 			if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
 			{
 				SDL_Log("Selected decision: %i", currentDecisionIndex + 1);
-				PrintText("");
+				PrintText(std::string());
 
 				currentScore += scene->actions[currentDecisionIndex].scoreDelta;
 				SetNextScene(&scene->actions[currentDecisionIndex]);
@@ -450,7 +452,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 	return true;
 }
 
-bool Game::PrintText(const char* text, ...)
+bool Game::PrintText(const std::string text)
 {
 	if (currentTextTexture != nullptr)
 	{
@@ -460,26 +462,22 @@ bool Game::PrintText(const char* text, ...)
 		currentTextTextureHeight = 0;
 	}
 
-	if (strlen(text) == 0)
+	if (text.empty())
 	{
 		SDL_Log("Text has been cleared.");
 		return true;
 	}
 
-	va_list args;
-	va_start(args, text);
-	char finalText[256];
-	vsprintf(finalText, text, args);
-	va_end(args);
+	const char* cText = text.c_str();
 
 	if (textFont == nullptr)
 	{
-		SDL_Log("%s", finalText);
+		SDL_Log("%s", cText);
 		return false;
 	}
 
-	SDL_Color White = { 255, 255, 255, 255 };
-	SDL_Surface* textSurface = TTF_RenderText_Blended(textFont, finalText, White);
+	SDL_Color white = { 255, 255, 255, 255 };
+	SDL_Surface* textSurface = TTF_RenderText_Blended(textFont, cText, white);
 
 	if (textSurface == nullptr)
 	{
@@ -498,7 +496,7 @@ bool Game::PrintText(const char* text, ...)
 	}
 
 	int32_t w, h;
-	if (TTF_SizeText(textFont, finalText, &w, &h) < 0)
+	if (TTF_SizeText(textFont, cText, &w, &h) < 0)
 	{
 		SDL_DestroyTexture(textTexture);
 		SDL_LogError(0, "Can't calculate size of text texture: %s", TTF_GetError());
@@ -514,6 +512,6 @@ bool Game::PrintText(const char* text, ...)
 
 void Game::ToUpperCase(std::string* text)
 {
-	for (auto &c : *text)
+	for (auto& c : *text)
 		c = toupper(c);
 }

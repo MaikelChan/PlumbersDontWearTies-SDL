@@ -69,6 +69,6 @@ private:
 	int16_t GetSceneIndexFromID(const int16_t id);
 	bool LoadTextureFromBMP(std::string fileName);
 	bool LoadAudioFromWAV(std::string fileName);
-	bool PrintText(const char* text, ...);
+	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
 };
