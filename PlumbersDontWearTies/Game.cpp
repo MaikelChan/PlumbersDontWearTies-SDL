@@ -1,6 +1,7 @@
 #include "Game.h"
 
-#include <fstream>
+std::ifstream Game::currentAudioStream = std::ifstream();
+int32_t Game::currentAudioStreamLegth = 0;
 
 Game::Game(SDL_Renderer* renderer)
 {
@@ -25,8 +26,9 @@ Game::Game(SDL_Renderer* renderer)
 	currentTextTextureWidth = 0;
 	currentTextTextureHeight = 0;
 
-	currentAudioDeviceId = 0;
-	currentAudioBuffer = nullptr;
+	audioDeviceId = 0;
+	currentAudioStream = std::ifstream();
+	currentAudioStreamLegth = 0;
 
 	currentGameState = GameStates::Stopped;
 	currentSceneIndex = 0;
@@ -106,6 +108,29 @@ void Game::Start()
 	currentDecisionIndex = -1;
 	currentScore = 0;
 	currentWaitTimer = 0.0;
+
+	// Initialize audio
+
+	SDL_AudioSpec desiredAudioSpec, obtainedAudioSpec;
+	SDL_memset(&desiredAudioSpec, 0, sizeof(desiredAudioSpec));
+	desiredAudioSpec.freq = 11025;
+	desiredAudioSpec.format = AUDIO_S16;
+	desiredAudioSpec.channels = 2;
+	desiredAudioSpec.samples = 256;
+	desiredAudioSpec.callback = AudioCallback;
+	audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &desiredAudioSpec, &obtainedAudioSpec, /*SDL_AUDIO_ALLOW_FORMAT_CHANGE*/ 0);
+
+	if (audioDeviceId == 0)
+	{
+		SDL_LogError(0, "Can't open audio device: %s", SDL_GetError());
+		return;
+	}
+	else
+	{
+		SDL_Log("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
+	}
+
+	SDL_PauseAudioDevice(audioDeviceId, 0);
 }
 
 void Game::Stop()
@@ -126,16 +151,17 @@ void Game::Stop()
 		currentTextTexture = nullptr;
 	}
 
-	if (currentAudioDeviceId > 0)
+	if (audioDeviceId > 0)
 	{
-		SDL_CloseAudioDevice(currentAudioDeviceId);
-		currentAudioDeviceId = 0;
+		SDL_CloseAudioDevice(audioDeviceId);
+		audioDeviceId = 0;
 	}
 
-	if (currentAudioBuffer != nullptr)
+	if (currentAudioStream.is_open())
 	{
-		SDL_FreeWAV(currentAudioBuffer);
-		currentAudioBuffer = nullptr;
+		currentAudioStream.close();
+		currentAudioStream = std::ifstream();
+		currentAudioStreamLegth = 0;
 	}
 }
 
@@ -285,7 +311,7 @@ void Game::WindowSizeChanged(const int32_t width, const int32_t height)
 	rendererWidth = width;
 	rendererHeight = height;
 
-	SDL_Log("Changed window size: %ix%i", width, height);
+	SDL_Log("New window size: %ix%i.", width, height);
 }
 
 void Game::SelectDecision(const int8_t decision)
@@ -321,7 +347,7 @@ void Game::SetNextScene(const _actionDef* action)
 
 		// Going to previous decision implies changing the scene,
 		// so interrupt the audio of current scene in case it's still playing.
-		LoadAudioFromWAV("");
+		LoadAudioFromWAV(std::string());
 	}
 	else
 	{
@@ -403,16 +429,11 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 
 bool Game::LoadAudioFromWAV(std::string fileName)
 {
-	if (currentAudioDeviceId > 0)
+	if (currentAudioStream.is_open())
 	{
-		SDL_CloseAudioDevice(currentAudioDeviceId);
-		currentAudioDeviceId = 0;
-	}
-
-	if (currentAudioBuffer != nullptr)
-	{
-		SDL_FreeWAV(currentAudioBuffer);
-		currentAudioBuffer = nullptr;
+		currentAudioStream.close();
+		currentAudioStream = std::ifstream();
+		currentAudioStreamLegth = 0;
 	}
 
 	if (fileName.empty())
@@ -421,38 +442,21 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 		return true;
 	}
 
-	SDL_AudioSpec wavSpec;
-	uint8_t* wavBuffer;
-	uint32_t wavLength;
-
 	ToUpperCase(&fileName);
-	if (SDL_LoadWAV((baseDataPath + fileName).c_str(), &wavSpec, &wavBuffer, &wavLength) == nullptr)
+	currentAudioStream = std::ifstream(baseDataPath + fileName, std::ios::binary);
+
+	if (!currentAudioStream.is_open())
 	{
 		SDL_LogError(0, "Can't load audio file: %s", SDL_GetError());
 		return false;
 	}
 
-	SDL_AudioDeviceID deviceId = SDL_OpenAudioDevice(NULL, 0, &wavSpec, NULL, 0);
+	currentAudioStream.seekg(0, std::ios_base::end);
+	currentAudioStreamLegth = currentAudioStream.tellg();
 
-	if (deviceId == 0)
-	{
-		SDL_FreeWAV(wavBuffer);
-		SDL_LogError(0, "Can't open audio device: %s", SDL_GetError());
-		return false;
-	}
+	// TODO: Does audio data in a WAV always start in the same offset?
+	currentAudioStream.seekg(0x2c, std::ios_base::beg);
 
-	if (SDL_QueueAudio(deviceId, wavBuffer, wavLength) < 0)
-	{
-		SDL_FreeWAV(wavBuffer);
-		SDL_CloseAudioDevice(deviceId);
-		SDL_LogError(0, "Can't enqueue audio: %s", SDL_GetError());
-		return false;
-	}
-
-	currentAudioDeviceId = deviceId;
-	currentAudioBuffer = wavBuffer;
-
-	SDL_PauseAudioDevice(deviceId, 0);
 	return true;
 }
 
@@ -518,4 +522,31 @@ void Game::ToUpperCase(std::string* text)
 {
 	for (auto& c : *text)
 		c = toupper(c);
+}
+
+void Game::AudioCallback(void* userdata, uint8_t* stream, int32_t len)
+{
+	if (currentAudioStream.is_open())
+	{
+		currentAudioStream.read((char*)stream, len);
+
+		int32_t bytesRead = currentAudioStream.gcount();
+		int32_t remainingBytes = len - bytesRead;
+
+		if (remainingBytes > 0)
+		{
+			SDL_memset(stream + bytesRead, 0, remainingBytes);
+
+			// We have finished reading the audio file,
+			// don't need to keep it open.
+
+			currentAudioStream.close();
+			currentAudioStream = std::ifstream();
+			currentAudioStreamLegth = 0;
+		}
+	}
+	else
+	{
+		SDL_memset(stream, 0, len);
+	}
 }

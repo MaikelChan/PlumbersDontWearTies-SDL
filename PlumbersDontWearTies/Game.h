@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <string>
 
 #include <SDL.h>
@@ -38,8 +39,9 @@ private:
 	int32_t currentTextTextureWidth;
 	int32_t currentTextTextureHeight;
 
-	SDL_AudioDeviceID currentAudioDeviceId;
-	uint8_t* currentAudioBuffer;
+	SDL_AudioDeviceID audioDeviceId;
+	static std::ifstream currentAudioStream;
+	static int32_t currentAudioStreamLegth;
 
 	GameStates currentGameState;
 	int16_t currentSceneIndex;
@@ -70,4 +72,6 @@ private:
 	bool LoadAudioFromWAV(std::string fileName);
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
+
+	static void AudioCallback(void* userdata, uint8_t* stream, int32_t len);
 };

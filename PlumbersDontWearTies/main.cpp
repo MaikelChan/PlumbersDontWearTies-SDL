@@ -4,11 +4,15 @@
 
 int main(int argc, char** args)
 {
+	// Initialize SDL
+
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		SDL_LogCritical(0, "Error initializing SDL: %s", SDL_GetError());
 		return 1;
 	}
+
+	// Create window
 
 	SDL_Window* window = SDL_CreateWindow("Plumbers Don't Wear Ties", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
@@ -17,6 +21,8 @@ int main(int argc, char** args)
 		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
 		return 1;
 	}
+
+	// Initialize renderer
 
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -34,7 +40,7 @@ int main(int argc, char** args)
 	{
 		controller = SDL_GameControllerOpen(0);
 		if (controller)
-			SDL_Log("Found a valid controller named: %s", SDL_GameControllerName(controller));
+			SDL_Log("Found a valid controller named: %s.", SDL_GameControllerName(controller));
 	}
 
 	// Initialize the game
