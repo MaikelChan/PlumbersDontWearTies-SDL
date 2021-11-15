@@ -113,9 +113,9 @@ void Game::Start()
 
 	SDL_AudioSpec desiredAudioSpec, obtainedAudioSpec;
 	SDL_memset(&desiredAudioSpec, 0, sizeof(desiredAudioSpec));
-	desiredAudioSpec.freq = 11025;
+	desiredAudioSpec.freq = WAV_FREQUENCY;
 	desiredAudioSpec.format = AUDIO_S16;
-	desiredAudioSpec.channels = 2;
+	desiredAudioSpec.channels = WAV_CHANNELS;
 	desiredAudioSpec.samples = 256;
 	desiredAudioSpec.callback = AudioCallback;
 	audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &desiredAudioSpec, &obtainedAudioSpec, /*SDL_AUDIO_ALLOW_FORMAT_CHANGE*/ 0);
@@ -325,6 +325,29 @@ void Game::AdvancePicture()
 	if (!IsInitialized()) return;
 	if (currentGameState != GameStates::WaitingPicture) return;
 
+	if (currentAudioStream.is_open())
+	{
+		// Calculate elapsed time since beginning of scene
+
+		int16_t startPictureIndex = gameData->scenes[currentSceneIndex].pictureIndex;
+		int16_t endPictureIndex = startPictureIndex + currentPictureIndex + 1;
+
+		double elapsedTime = 0.0;
+		for (int16_t t = startPictureIndex; t < endPictureIndex; t++)
+		{
+			elapsedTime += gameData->pictures[t].duration / 10.0;
+		}
+
+		int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT * WAV_CHANNELS);
+
+		// Make sure samplePosition is even, not odd.
+		// Being stereo, each sample is expected to be a pair of left and right speaker data.
+
+		samplePosition &= ~1;
+
+		currentAudioStream.seekg(WAV_DATA_START_POSITION + samplePosition, std::ios_base::beg);
+	}
+
 	currentWaitTimer = 0;
 }
 
@@ -382,11 +405,11 @@ int16_t Game::GetSceneIndexFromID(const int16_t id)
 		if (result == 0)
 		{
 			return s;
-		}
 	}
+}
 
 	return 0;
-}
+	}
 
 bool Game::LoadTextureFromBMP(std::string fileName)
 {
@@ -455,7 +478,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 	currentAudioStreamLegth = currentAudioStream.tellg();
 
 	// TODO: Does audio data in a WAV always start in the same offset?
-	currentAudioStream.seekg(0x2c, std::ios_base::beg);
+	currentAudioStream.seekg(WAV_DATA_START_POSITION, std::ios_base::beg);
 
 	return true;
 }

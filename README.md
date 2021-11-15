@@ -11,7 +11,7 @@ This is the current state of the project:
 - It can be played with a keyboard or an XInput compatible controller.
 - Rendering, audio and input are implemented with SDL2.
 - Window can be resized to any arbitrary dimensions and set to borderless fullscreen.
-- It is possible to advance to the next picture to progress quickly throgh the game, but that will desync the audio.
+- It is possible to advance to the next picture to progress quickly through the game.
 
 <p align="center" style="font-weight: bold; font-style: italic">This game shall never fall into obscurity.</p>
 

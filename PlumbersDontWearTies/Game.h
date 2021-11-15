@@ -8,6 +8,16 @@
 
 #include "GameData.h"
 
+// Format of game's WAV files
+
+#define WAV_FREQUENCY 11025 // Hz
+#define WAV_FORMAT 2 // 2 bytes, 16 bits
+#define WAV_CHANNELS 2 // Stereo
+
+// TODO: Does audio data in a WAV always start in the same offset?
+
+#define WAV_DATA_START_POSITION 0x2c
+
 enum class GameStates
 {
 	Stopped,
