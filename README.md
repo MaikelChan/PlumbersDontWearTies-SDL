@@ -1,6 +1,6 @@
-# Plumber's Don't Wear Ties - SDL2
+# Plumbers Don't Wear Ties - SDL2
 
-This project is my own implementation of the game `Plumber's Don't Wear Ties` written from scratch, that is, the original program has not been decompiled or reverse-engineered. However, the game still needs the assets from the original PC version to run. The only thing that has been reverse-engineered is the `GAME.BIN` file, done by [Daniel Marschall](https://misc.daniel-marschall.de/spiele/plumbers/?page=pc_gamebin), which contains information about the scenes, background images, sounds and sequences of events.
+This project is my own implementation of the game `Plumbers Don't Wear Ties` written from scratch, that is, the original program has not been decompiled or reverse-engineered. However, the game still needs the assets from the original PC version to run. The only thing that has been reverse-engineered is the `GAME.BIN` file, done by [Daniel Marschall](https://misc.daniel-marschall.de/spiele/plumbers/?page=pc_gamebin), which contains information about the scenes, background images, sounds and sequences of events.
 
 This game is infamous for being considered one of the worst games ever made. The 3DO version is much more known (relatively speaking), but there was also a very rare Windows version released in 1993. Due to being 16bit, it can't be run on modern PCs.
 
@@ -12,8 +12,6 @@ This is the current state of the project:
 - Rendering, audio and input are implemented with SDL2.
 - Window can be resized to any arbitrary dimensions and set to borderless fullscreen.
 - It is possible to advance to the next picture to progress quickly through the game.
-
-<p align="center" style="font-weight: bold; font-style: italic">This game shall never fall into obscurity.</p>
 
 ## How to build
 
@@ -50,9 +48,9 @@ You will need [CMake](https://cmake.org) to build the project.
 ## Screenshots
 
 <p align="center">
-  <img title="Plumber's Don't Wear Ties screenshot" src="/screenshot00.png">
-  <img title="Plumber's Don't Wear Ties screenshot" src="/screenshot01.png">
-  <img title="Plumber's Don't Wear Ties screenshot" src="/screenshot02.png">
-  <img title="Plumber's Don't Wear Ties screenshot" src="/screenshot03.png">
-  <img title="Plumber's Don't Wear Ties screenshot" src="/screenshot04.png">
+  <img title="Plumbers Don't Wear Ties screenshot" src="/screenshot00.png">
+  <img title="Plumbers Don't Wear Ties screenshot" src="/screenshot01.png">
+  <img title="Plumbers Don't Wear Ties screenshot" src="/screenshot02.png">
+  <img title="Plumbers Don't Wear Ties screenshot" src="/screenshot03.png">
+  <img title="Plumbers Don't Wear Ties screenshot" src="/screenshot04.png">
 </p>
