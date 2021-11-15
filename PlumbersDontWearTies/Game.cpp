@@ -344,7 +344,11 @@ void Game::SetNextScene(const _actionDef* action)
 int16_t Game::GetSceneIndexFromID(const int16_t id)
 {
 	char sceneName[10];
+#ifdef _MSC_VER
+	sprintf_s(sceneName, sizeof(sceneName), "SC%02d", id);
+#else
 	sprintf(sceneName, "SC%02d", id);
+#endif
 
 	for (int16_t s = 0; s < gameData->numScenes; s++)
 	{

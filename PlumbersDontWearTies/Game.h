@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <cstring>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
