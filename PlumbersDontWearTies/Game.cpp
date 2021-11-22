@@ -340,8 +340,7 @@ void Game::AdvancePicture()
 
 		int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT * WAV_CHANNELS);
 
-		// Make sure samplePosition is even, not odd.
-		// Being stereo, each sample is expected to be a pair of left and right speaker data.
+		// Make sure samplePosition is even, not odd, as audio is 16bit.
 
 		samplePosition &= ~1;
 
@@ -405,11 +404,11 @@ int16_t Game::GetSceneIndexFromID(const int16_t id)
 		if (result == 0)
 		{
 			return s;
+		}
 	}
-}
 
 	return 0;
-	}
+}
 
 bool Game::LoadTextureFromBMP(std::string fileName)
 {
@@ -475,7 +474,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 	}
 
 	currentAudioStream.seekg(0, std::ios_base::end);
-	currentAudioStreamLegth = currentAudioStream.tellg();
+	currentAudioStreamLegth = static_cast<int32_t>(currentAudioStream.tellg());
 
 	// TODO: Does audio data in a WAV always start in the same offset?
 	currentAudioStream.seekg(WAV_DATA_START_POSITION, std::ios_base::beg);
@@ -553,7 +552,7 @@ void Game::AudioCallback(void* userdata, uint8_t* stream, int32_t len)
 	{
 		currentAudioStream.read((char*)stream, len);
 
-		int32_t bytesRead = currentAudioStream.gcount();
+		int32_t bytesRead = static_cast<int32_t>(currentAudioStream.gcount());
 		int32_t remainingBytes = len - bytesRead;
 
 		if (remainingBytes > 0)
