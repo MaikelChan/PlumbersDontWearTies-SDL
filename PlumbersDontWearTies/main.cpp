@@ -34,14 +34,9 @@ int main(int argc, char** args)
 
 	// Initialize game controller
 
-	SDL_GameController* controller = nullptr;
-
-	if (SDL_IsGameController(0))
-	{
-		controller = SDL_GameControllerOpen(0);
-		if (controller)
-			SDL_Log("Found a valid controller named: %s.", SDL_GameControllerName(controller));
-	}
+	controller = nullptr;
+	controllerInstanceID = -1;
+	OpenFirstAvailableController();
 
 	// Initialize the game
 
@@ -58,12 +53,12 @@ int main(int argc, char** args)
 			switch (event.type)
 			{
 				case SDL_QUIT:
-
+				{
 					game->Stop();
 					break;
-
+				}
 				case SDL_KEYDOWN:
-
+				{
 					switch (event.key.keysym.sym)
 					{
 						case SDLK_ESCAPE:
@@ -93,9 +88,9 @@ int main(int argc, char** args)
 					}
 
 					break;
-
+				}
 				case SDL_CONTROLLERBUTTONDOWN:
-
+				{
 					switch (event.cbutton.button)
 					{
 						case SDL_CONTROLLER_BUTTON_BACK:
@@ -119,9 +114,29 @@ int main(int argc, char** args)
 					}
 
 					break;
+				}
+				case SDL_CONTROLLERDEVICEADDED:
+				{
+					OpenFirstAvailableController();
+					break;
+				}
+				case SDL_CONTROLLERDEVICEREMOVED:
+				{
+					if (event.cdevice.which == controllerInstanceID && controller != nullptr)
+					{
+						SDL_GameControllerClose(controller);
+						controller = nullptr;
+						controllerInstanceID = -1;
 
+						SDL_Log("Controller has been disconnected: instance ID %i", event.cdevice.which);
+
+						OpenFirstAvailableController();
+					}
+
+					break;
+				}
 				case SDL_WINDOWEVENT:
-
+				{
 					switch (event.window.event)
 					{
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
@@ -130,6 +145,7 @@ int main(int argc, char** args)
 					}
 
 					break;
+				}
 			}
 		}
 
@@ -151,6 +167,7 @@ int main(int argc, char** args)
 	if (controller != nullptr)
 	{
 		SDL_GameControllerClose(controller);
+		controller = nullptr;
 	}
 
 	SDL_DestroyRenderer(renderer);
@@ -173,5 +190,26 @@ void ToggleFullscreen(SDL_Window* window)
 	{
 		if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0)
 			SDL_LogError(0, "Can't set the game to full screen mode: %s", SDL_GetError());
+	}
+}
+
+void OpenFirstAvailableController()
+{
+	if (controller != nullptr) return;
+
+	for (int j = 0; j < SDL_NumJoysticks(); j++)
+	{
+		if (!SDL_IsGameController(j)) continue;
+
+		controller = SDL_GameControllerOpen(j);
+		if (controller != nullptr)
+		{
+			SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
+			controllerInstanceID = SDL_JoystickInstanceID(joystick);
+
+			SDL_Log("Found new controller: index %i, instance ID %i, name %s", j, controllerInstanceID, SDL_GameControllerName(controller));
+
+			return;
+		}
 	}
 }
