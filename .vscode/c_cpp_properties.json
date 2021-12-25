@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Wii",
+            "includePath": [
+                "${workspaceFolder}",
+                "${DEVKITPRO}/libogc/**",
+                "${DEVKITPRO}/portlibs/wii/include/**"
+            ],
+            "defines":
+            [
+                "BIG_ENDIAN",
+                "HW_RVL"
+            ],
+            "compilerPath": "${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-gcc",
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}

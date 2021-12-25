@@ -3,30 +3,24 @@
 std::ifstream Game::currentAudioStream = std::ifstream();
 int32_t Game::currentAudioStreamLegth = 0;
 
-Game::Game(SDL_Renderer* renderer)
+Game::Game(SDL_Surface *screenSurface)
 {
 	// Initialize class variables
 
-	baseDataPath = "Data";
+	baseDataPath = "sd:/apps/PlumbersDontWearTies/Data/";
 	pathSeparator = "/";
-	baseDataPath = baseDataPath + pathSeparator;
 
 	gameData = nullptr;
 
-	Game::renderer = renderer;
-	rendererWidth = 0;
-	rendererHeight = 0;
+	Game::screenSurface = screenSurface;
+	rendererWidth = 640;
+	rendererHeight = 480;
 
 	currentTexture = nullptr;
-	currentTextureWidth = 0;
-	currentTextureHeight = 0;
 
 	textFont = nullptr;
 	currentTextTexture = nullptr;
-	currentTextTextureWidth = 0;
-	currentTextTextureHeight = 0;
 
-	audioDeviceId = 0;
 	currentAudioStream = std::ifstream();
 	currentAudioStreamLegth = 0;
 
@@ -42,7 +36,7 @@ Game::Game(SDL_Renderer* renderer)
 
 	if (TTF_Init() < 0)
 	{
-		SDL_LogError(0, "TTF has not been initialized: %s", TTF_GetError());
+		printf("TTF has not been initialized: %s\n", TTF_GetError());
 	}
 
 	std::string fontPath = baseDataPath + "Font.ttf";
@@ -50,7 +44,7 @@ Game::Game(SDL_Renderer* renderer)
 
 	if (textFont == nullptr)
 	{
-		SDL_LogError(0, "%s has not been found or couldn't be opened: %s", fontPath.c_str(), TTF_GetError());
+		printf("%s has not been found or couldn't be opened: %s\n", fontPath.c_str(), TTF_GetError());
 	}
 
 	// Load GAME.BIN
@@ -59,12 +53,12 @@ Game::Game(SDL_Renderer* renderer)
 
 	if (!gameBinStream.is_open())
 	{
-		SDL_LogCritical(0, "GAME.BIN has not been found.");
+		printf("GAME.BIN has not been found.\n");
 		return;
 	}
 
 	gameData = new _gameBinFile;
-	gameBinStream.read((char*)gameData, sizeof(_gameBinFile));
+	gameBinStream.read((char *)gameData, sizeof(_gameBinFile));
 	gameBinStream.close();
 }
 
@@ -90,16 +84,8 @@ Game::~Game()
 
 void Game::Start()
 {
-	if (!IsInitialized()) return;
-
-	int rw, rh;
-	if (SDL_GetRendererOutputSize(renderer, &rw, &rh) < 0)
-	{
-		SDL_LogCritical(0, "Could not get renderer output size: %s", SDL_GetError());
+	if (!IsInitialized())
 		return;
-	}
-
-	WindowSizeChanged(rw, rh);
 
 	currentGameState = GameStates::BeginScene;
 	currentSceneIndex = 0;
@@ -118,43 +104,42 @@ void Game::Start()
 	desiredAudioSpec.channels = WAV_CHANNELS;
 	desiredAudioSpec.samples = 256;
 	desiredAudioSpec.callback = AudioCallback;
-	audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &desiredAudioSpec, &obtainedAudioSpec, /*SDL_AUDIO_ALLOW_FORMAT_CHANGE*/ 0);
 
-	if (audioDeviceId == 0)
+	if (SDL_OpenAudio(&desiredAudioSpec, &obtainedAudioSpec) < 0)
 	{
-		SDL_LogError(0, "Can't open audio device: %s", SDL_GetError());
+		printf("Can't open audio device: %s\n", SDL_GetError());
 		return;
 	}
 	else
 	{
-		SDL_Log("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
+		printf("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.\n", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
 	}
 
-	SDL_PauseAudioDevice(audioDeviceId, 0);
+	SDL_PauseAudio(0);
 }
 
 void Game::Stop()
 {
-	if (!IsInitialized()) return;
+	if (!IsInitialized())
+		return;
 
 	currentGameState = GameStates::Stopped;
 
 	if (currentTexture != nullptr)
 	{
-		SDL_DestroyTexture(currentTexture);
+		SDL_FreeSurface(currentTexture);
 		currentTexture = nullptr;
 	}
 
 	if (currentTextTexture != nullptr)
 	{
-		SDL_DestroyTexture(currentTextTexture);
+		SDL_FreeSurface(currentTextTexture);
 		currentTextTexture = nullptr;
 	}
 
-	if (audioDeviceId > 0)
+	if (SDL_GetAudioStatus() != SDL_AUDIO_STOPPED)
 	{
-		SDL_CloseAudioDevice(audioDeviceId);
-		audioDeviceId = 0;
+		SDL_CloseAudio();
 	}
 
 	if (currentAudioStream.is_open())
@@ -167,92 +152,93 @@ void Game::Stop()
 
 void Game::Update(const double deltaSeconds)
 {
-	if (!IsInitialized()) return;
+	if (!IsInitialized())
+		return;
 
 	// Update game
 
-	_sceneDef* scene = &gameData->scenes[currentSceneIndex];
+	_sceneDef *scene = &gameData->scenes[currentSceneIndex];
 
 	switch (currentGameState)
 	{
-		case GameStates::Stopped:
+	case GameStates::Stopped:
+	{
+		return;
+	}
+	case GameStates::BeginScene:
+	{
+		printf("Entered scene %s.\n", scene->szSceneFolder);
+
+		std::string wavPath = scene->szSceneFolder + pathSeparator + scene->szDialogWav;
+		if (LoadAudioFromWAV(wavPath))
+			printf("Playing %s audio file...\n", scene->szDialogWav);
+
+		currentPictureIndex = 0;
+		currentGameState = GameStates::BeginPicture;
+		break;
+	}
+	case GameStates::BeginPicture:
+	{
+		_pictureDef *picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
+		std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
+		if (LoadTextureFromBMP(bmpPath))
+			printf("Loaded picture %s\n", bmpPath.c_str());
+
+		currentWaitTimer = picture->duration / 10.0;
+		printf("Waiting %f seconds...\n", currentWaitTimer);
+
+		currentGameState = GameStates::WaitingPicture;
+		break;
+	}
+	case GameStates::WaitingPicture:
+	{
+		currentWaitTimer -= deltaSeconds;
+		if (currentWaitTimer <= 0)
 		{
-			return;
+			currentWaitTimer = 0;
+			currentPictureIndex++;
+			if (currentPictureIndex >= scene->numPics)
+				currentGameState = GameStates::BeginDecision;
+			else
+				currentGameState = GameStates::BeginPicture;
 		}
-		case GameStates::BeginScene:
+
+		break;
+	}
+	case GameStates::BeginDecision:
+	{
+		if (scene->numActions == 1)
 		{
-			SDL_Log("Entered scene %s.", scene->szSceneFolder);
-
-			std::string wavPath = scene->szSceneFolder + pathSeparator + scene->szDialogWav;
-			if (LoadAudioFromWAV(wavPath))
-				SDL_Log("Playing %s audio file...", scene->szDialogWav);
-
-			currentPictureIndex = 0;
-			currentGameState = GameStates::BeginPicture;
+			SetNextScene(&scene->actions[0]);
 			break;
 		}
-		case GameStates::BeginPicture:
+
+		std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
+		if (LoadTextureFromBMP(bmpPath))
+			printf("Loaded picture %s\n", bmpPath.c_str());
+
+		PrintText("Your score is: " + std::to_string(currentScore));
+
+		printf("%i decisions to choose, waiting for player input...\n", scene->numActions);
+
+		currentDecisionIndex = -1;
+		currentGameState = GameStates::WaitingDecision;
+
+		break;
+	}
+	case GameStates::WaitingDecision:
+	{
+		if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
 		{
-			_pictureDef* picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
-			std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
-			if (LoadTextureFromBMP(bmpPath))
-				SDL_Log("Loaded picture %s", bmpPath.c_str());
+			printf("Selected decision: %i\n", currentDecisionIndex + 1);
+			PrintText(std::string());
 
-			currentWaitTimer = picture->duration / 10.0;
-			SDL_Log("Waiting %f seconds...", currentWaitTimer);
-
-			currentGameState = GameStates::WaitingPicture;
-			break;
+			currentScore += scene->actions[currentDecisionIndex].scoreDelta;
+			SetNextScene(&scene->actions[currentDecisionIndex]);
 		}
-		case GameStates::WaitingPicture:
-		{
-			currentWaitTimer -= deltaSeconds;
-			if (currentWaitTimer <= 0)
-			{
-				currentWaitTimer = 0;
-				currentPictureIndex++;
-				if (currentPictureIndex >= scene->numPics)
-					currentGameState = GameStates::BeginDecision;
-				else
-					currentGameState = GameStates::BeginPicture;
-			}
 
-			break;
-		}
-		case GameStates::BeginDecision:
-		{
-			if (scene->numActions == 1)
-			{
-				SetNextScene(&scene->actions[0]);
-				break;
-			}
-
-			std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
-			if (LoadTextureFromBMP(bmpPath))
-				SDL_Log("Loaded picture %s", bmpPath.c_str());
-
-			PrintText("Your score is: " + std::to_string(currentScore));
-
-			SDL_Log("%i decisions to choose, waiting for player input...", scene->numActions);
-
-			currentDecisionIndex = -1;
-			currentGameState = GameStates::WaitingDecision;
-
-			break;
-		}
-		case GameStates::WaitingDecision:
-		{
-			if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
-			{
-				SDL_Log("Selected decision: %i", currentDecisionIndex + 1);
-				PrintText(std::string());
-
-				currentScore += scene->actions[currentDecisionIndex].scoreDelta;
-				SetNextScene(&scene->actions[currentDecisionIndex]);
-			}
-
-			break;
-		}
+		break;
+	}
 	}
 
 	// Render picture
@@ -260,7 +246,7 @@ void Game::Update(const double deltaSeconds)
 	SDL_Rect textureRect;
 
 	float rendererAspectRatio = static_cast<float>(rendererWidth) / rendererHeight;
-	float textureAspectRatio = static_cast<float>(currentTextureWidth) / currentTextureHeight;
+	float textureAspectRatio = static_cast<float>(currentTexture->w) / currentTexture->h;
 
 	if (rendererAspectRatio > textureAspectRatio)
 	{
@@ -279,7 +265,7 @@ void Game::Update(const double deltaSeconds)
 		textureRect.h = gameHeight;
 	}
 
-	SDL_RenderCopy(renderer, currentTexture, NULL, &textureRect);
+	SDL_BlitSurface(currentTexture, NULL, screenSurface, &textureRect);
 
 	// Render text
 
@@ -288,42 +274,35 @@ void Game::Update(const double deltaSeconds)
 		float scale;
 
 		if (rendererAspectRatio > textureAspectRatio)
-			scale = static_cast<float>(rendererHeight) / currentTextureHeight;
+			scale = static_cast<float>(rendererHeight) / currentTexture->h;
 		else
-			scale = static_cast<float>(rendererWidth) / currentTextureWidth;
+			scale = static_cast<float>(rendererWidth) / currentTexture->w;
 
 		scale *= 0.5;
 
 		SDL_Rect textRect;
 		textRect.x = textureRect.x + static_cast<int32_t>(32 * scale);
 		textRect.y = textureRect.y + textureRect.h - static_cast<int32_t>(80 * scale);
-		textRect.w = static_cast<int32_t>(currentTextTextureWidth * scale);
-		textRect.h = static_cast<int32_t>(currentTextTextureHeight * scale);
+		textRect.w = static_cast<int32_t>(currentTextTexture->w * scale);
+		textRect.h = static_cast<int32_t>(currentTextTexture->h * scale);
 
-		SDL_RenderCopy(renderer, currentTextTexture, NULL, &textRect);
+		SDL_BlitSurface(currentTextTexture, NULL, screenSurface, &textRect);
 	}
-}
-
-void Game::WindowSizeChanged(const int32_t width, const int32_t height)
-{
-	if (!IsInitialized()) return;
-
-	rendererWidth = width;
-	rendererHeight = height;
-
-	SDL_Log("New window size: %ix%i.", width, height);
 }
 
 void Game::SelectDecision(const int8_t decision)
 {
-	if (!IsInitialized()) return;
+	if (!IsInitialized())
+		return;
 	currentDecisionIndex = decision;
 }
 
 void Game::AdvancePicture()
 {
-	if (!IsInitialized()) return;
-	if (currentGameState != GameStates::WaitingPicture) return;
+	if (!IsInitialized())
+		return;
+	if (currentGameState != GameStates::WaitingPicture)
+		return;
 
 	if (currentAudioStream.is_open())
 	{
@@ -350,7 +329,7 @@ void Game::AdvancePicture()
 	currentWaitTimer = 0;
 }
 
-void Game::SetNextScene(const _actionDef* action)
+void Game::SetNextScene(const _actionDef *action)
 {
 	int16_t id = action->nextSceneID;
 
@@ -383,7 +362,8 @@ void Game::SetNextScene(const _actionDef* action)
 
 	//SDL_Log("Previous scene %s, index %i", gameData->scenes[currentSceneIndex].szSceneFolder, currentSceneIndex);
 
-	if (gameData->scenes[currentSceneIndex].numActions > 1) lastDecisionSceneIndex = currentSceneIndex;
+	if (gameData->scenes[currentSceneIndex].numActions > 1)
+		lastDecisionSceneIndex = currentSceneIndex;
 	currentSceneIndex = nextSceneIndex;
 	currentPictureIndex = 0;
 	currentDecisionIndex = -1;
@@ -414,36 +394,20 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 {
 	if (currentTexture != nullptr)
 	{
-		SDL_DestroyTexture(currentTexture);
+		SDL_FreeSurface(currentTexture);
 		currentTexture = nullptr;
 	}
 
 	ToUpperCase(&fileName);
-	SDL_Surface* bmpSurface = SDL_LoadBMP((baseDataPath + fileName).c_str());
-
-	if (bmpSurface == nullptr)
-	{
-		SDL_LogError(0, "Can't load bitmap: %s", SDL_GetError());
-		return false;
-	}
-
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-	SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, bmpSurface);
-
-	SDL_FreeSurface(bmpSurface);
+	SDL_Surface *newTexture = SDL_LoadBMP((baseDataPath + fileName).c_str());
 
 	if (newTexture == nullptr)
 	{
-		SDL_LogError(0, "Can't create texture: %s", SDL_GetError());
+		printf("Can't load bitmap into surface: %s\n", SDL_GetError());
 		return false;
 	}
 
-	if (SDL_QueryTexture(newTexture, NULL, NULL, &currentTextureWidth, &currentTextureHeight) < 0)
-	{
-		SDL_DestroyTexture(newTexture);
-		SDL_LogError(0, "Can't query texture: %s", SDL_GetError());
-		return false;
-	}
+	//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
 	currentTexture = newTexture;
 	return true;
@@ -460,7 +424,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 
 	if (fileName.empty())
 	{
-		SDL_Log("Audio has been interrupted.");
+		printf("Audio has been interrupted.\n");
 		return true;
 	}
 
@@ -469,7 +433,7 @@ bool Game::LoadAudioFromWAV(std::string fileName)
 
 	if (!currentAudioStream.is_open())
 	{
-		SDL_LogError(0, "Can't load audio file: %s", SDL_GetError());
+		printf("Can't load audio file: %s\n", SDL_GetError());
 		return false;
 	}
 
@@ -486,71 +450,57 @@ bool Game::PrintText(const std::string text)
 {
 	if (currentTextTexture != nullptr)
 	{
-		SDL_DestroyTexture(currentTextTexture);
+		SDL_FreeSurface(currentTextTexture);
 		currentTextTexture = nullptr;
-		currentTextTextureWidth = 0;
-		currentTextTextureHeight = 0;
 	}
 
 	if (text.empty())
 	{
-		SDL_Log("Text has been cleared.");
+		printf("Text has been cleared.\n");
 		return true;
 	}
 
-	const char* cText = text.c_str();
+	const char *cText = text.c_str();
 
 	if (textFont == nullptr)
 	{
-		SDL_Log("%s", cText);
+		printf("%s\n", cText);
 		return false;
 	}
 
-	SDL_Color white = { 255, 255, 255, 255 };
-	SDL_Surface* textSurface = TTF_RenderText_Blended(textFont, cText, white);
+	SDL_Color white = {255, 255, 255, 255};
+	SDL_Surface *textSurface = TTF_RenderText_Blended(textFont, cText, white);
 
 	if (textSurface == nullptr)
 	{
-		SDL_LogError(0, "Can't create text surface: %s", SDL_GetError());
-		return false;
-	}
-
-	SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-
-	SDL_FreeSurface(textSurface);
-
-	if (textTexture == nullptr)
-	{
-		SDL_LogError(0, "Can't create text texture: %s", SDL_GetError());
+		printf("Can't create text surface: %s\n", SDL_GetError());
 		return false;
 	}
 
 	int32_t w, h;
 	if (TTF_SizeText(textFont, cText, &w, &h) < 0)
 	{
-		SDL_DestroyTexture(textTexture);
-		SDL_LogError(0, "Can't calculate size of text texture: %s", TTF_GetError());
+		SDL_FreeSurface(textSurface);
+		printf("Can't calculate size of text texture: %s\n", TTF_GetError());
 		return false;
 	}
 
-	currentTextTexture = textTexture;
-	currentTextTextureWidth = w;
-	currentTextTextureHeight = h;
+	currentTextTexture = textSurface;
 
 	return true;
 }
 
-void Game::ToUpperCase(std::string* text)
+void Game::ToUpperCase(std::string *text)
 {
-	for (auto& c : *text)
+	for (auto &c : *text)
 		c = toupper(c);
 }
 
-void Game::AudioCallback(void* userdata, uint8_t* stream, int32_t len)
+void Game::AudioCallback(void *userdata, uint8_t *stream, int32_t len)
 {
 	if (currentAudioStream.is_open())
 	{
-		currentAudioStream.read((char*)stream, len);
+		currentAudioStream.read((char *)stream, len);
 
 		int32_t bytesRead = static_cast<int32_t>(currentAudioStream.gcount());
 		int32_t remainingBytes = len - bytesRead;

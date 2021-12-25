@@ -1,0 +1,33 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "make -j8 V=1",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "make clean",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Send via WiiLoad",
+            "type": "shell",
+            "options": {
+                "env": {
+                    "WIILOAD": "tcp:192.168.1.16"
+                }
+            },
+            "command": "wiiload PlumbersDontWearTies.dol",
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

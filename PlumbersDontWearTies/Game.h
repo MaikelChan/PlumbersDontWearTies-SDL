@@ -3,8 +3,8 @@
 #include <fstream>
 #include <string>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 
 #include "GameData.h"
 
@@ -36,20 +36,15 @@ private:
 
 	_gameBinFile* gameData;
 
-	SDL_Renderer* renderer;
+	SDL_Surface* screenSurface;
 	int32_t rendererWidth;
 	int32_t rendererHeight;
 
-	SDL_Texture* currentTexture;
-	int32_t currentTextureWidth;
-	int32_t currentTextureHeight;
+	SDL_Surface* currentTexture;
 
 	TTF_Font* textFont;
-	SDL_Texture* currentTextTexture;
-	int32_t currentTextTextureWidth;
-	int32_t currentTextTextureHeight;
+	SDL_Surface* currentTextTexture;
 
-	SDL_AudioDeviceID audioDeviceId;
 	static std::ifstream currentAudioStream;
 	static int32_t currentAudioStreamLegth;
 
@@ -62,13 +57,12 @@ private:
 	double currentWaitTimer;
 
 public:
-	Game(SDL_Renderer* renderer);
+	Game(SDL_Surface* screenSurface);
 	~Game();
 
 	void Start();
 	void Stop();
 	void Update(const double deltaSeconds);
-	void WindowSizeChanged(const int32_t width, const int32_t height);
 	void SelectDecision(const int8_t decisionIndex);
 	void AdvancePicture();
 
