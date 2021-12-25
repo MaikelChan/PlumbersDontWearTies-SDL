@@ -40,7 +40,7 @@ Game::Game(SDL_Surface *screenSurface)
 	}
 
 	std::string fontPath = baseDataPath + "Font.ttf";
-	textFont = TTF_OpenFont(fontPath.c_str(), 48);
+	textFont = TTF_OpenFont(fontPath.c_str(), 24);
 
 	if (textFont == nullptr)
 	{
@@ -60,6 +60,7 @@ Game::Game(SDL_Surface *screenSurface)
 	gameData = new _gameBinFile;
 	gameBinStream.read((char *)gameData, sizeof(_gameBinFile));
 	gameBinStream.close();
+	gameData->SwapEndianness();
 }
 
 Game::~Game()
@@ -242,6 +243,11 @@ void Game::Update(const double deltaSeconds)
 	}
 
 	// Render picture
+
+	if (currentTexture == nullptr)
+	{
+		return;
+	}
 
 	SDL_Rect textureRect;
 
@@ -515,6 +521,15 @@ void Game::AudioCallback(void *userdata, uint8_t *stream, int32_t len)
 			currentAudioStream.close();
 			currentAudioStream = std::ifstream();
 			currentAudioStreamLegth = 0;
+		}
+
+		// Swap each pair of bytes due to the Wii being Big Endian
+
+		for (int i = 0; i < bytesRead; i += 2)
+		{
+			uint8_t temp = stream[i + 0];
+			stream[i + 0] = stream[i + 1];
+			stream[i + 1] = temp;
 		}
 	}
 	else

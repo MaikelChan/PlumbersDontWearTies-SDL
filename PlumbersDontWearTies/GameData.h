@@ -21,6 +21,8 @@
 
 #include <cstdint>
 
+#include "utils.h"
+
 #define SCENEID_PREVDECISION -1
 #define SCENEID_ENDGAME 32767
 
@@ -71,6 +73,41 @@ struct _gameBinFile
 	int16_t     unknown2[2];
 	_sceneDef   scenes[100];       // Scenes start at file position 0x0016
 	_pictureDef pictures[2000];    // Pictures start at file position 0x2596
+
+	void SwapEndianness()
+	{
+		for (int u = 0; u < 7; u++)
+			unknown1[u] = utils::swap_i16(unknown1[u]);
+
+		numScenes = utils::swap_i16(numScenes);
+		numPics = utils::swap_i16(numPics);
+
+		for (int u = 0; u < 2; u++)
+			unknown2[u] = utils::swap_i16(unknown2[u]);
+
+		for (int s = 0; s < 100; s++)
+		{
+			scenes[s].numPics = utils::swap_i16(scenes[s].numPics);
+			scenes[s].pictureIndex = utils::swap_i16(scenes[s].pictureIndex);
+			scenes[s].numActions = utils::swap_i16(scenes[s].numActions);
+
+			for (int a = 0; a < 3; a++)
+			{
+				scenes[s].actions[a].scoreDelta = utils::swap_i32(scenes[s].actions[a].scoreDelta);
+				scenes[s].actions[a].nextSceneID = utils::swap_i16(scenes[s].actions[a].nextSceneID);
+				scenes[s].actions[a].sceneSegment = utils::swap_i16(scenes[s].actions[a].sceneSegment);
+				scenes[s].actions[a].cHotspotTopLeft.x = utils::swap_i16(scenes[s].actions[a].cHotspotTopLeft.x);
+				scenes[s].actions[a].cHotspotTopLeft.y = utils::swap_i16(scenes[s].actions[a].cHotspotTopLeft.y);
+				scenes[s].actions[a].cHotspotBottomRigh.x = utils::swap_i16(scenes[s].actions[a].cHotspotBottomRigh.x);
+				scenes[s].actions[a].cHotspotBottomRigh.y = utils::swap_i16(scenes[s].actions[a].cHotspotBottomRigh.y);
+			}
+		}
+
+		for (int p = 0; p < 2000; p++)
+		{
+			pictures[p].duration = utils::swap_i16(pictures[p].duration);
+		}
+	}
 };
 
 #pragma pack(pop)

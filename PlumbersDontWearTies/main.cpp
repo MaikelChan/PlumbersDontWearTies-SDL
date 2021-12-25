@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include <gccore.h>
 #include <wiiuse/wpad.h>
 
 int main(int argc, char **args)
@@ -27,6 +28,7 @@ int main(int argc, char **args)
 
 	// Initialize game controller
 
+	PAD_Init();
 	WPAD_Init();
 	SDL_ShowCursor(SDL_DISABLE);
 
@@ -52,21 +54,24 @@ int main(int argc, char **args)
 			}
 		}
 
+		PAD_ScanPads();
 		WPAD_ScanPads();
-		u32 buttonsDown = WPAD_ButtonsDown(0);
 
-		if (buttonsDown & WPAD_BUTTON_MINUS)
+		u32 gcButtonsDown = PAD_ButtonsDown(0);
+		u32 wiiButtonsDown = WPAD_ButtonsDown(0);
+
+		if ((gcButtonsDown & PAD_TRIGGER_Z) || (wiiButtonsDown & WPAD_BUTTON_MINUS))
 			game->Stop();
-		else if (buttonsDown & WPAD_BUTTON_LEFT)
+		else if ((gcButtonsDown & PAD_BUTTON_B) || (wiiButtonsDown & WPAD_BUTTON_LEFT))
 			game->SelectDecision(0);
-		else if (buttonsDown & WPAD_BUTTON_UP)
+		else if ((gcButtonsDown & PAD_BUTTON_Y) || (wiiButtonsDown & WPAD_BUTTON_UP))
 			game->SelectDecision(1);
-		else if (buttonsDown & WPAD_BUTTON_RIGHT)
+		else if ((gcButtonsDown & PAD_BUTTON_X) || (wiiButtonsDown & WPAD_BUTTON_RIGHT))
 			game->SelectDecision(2);
-		else if (buttonsDown & WPAD_BUTTON_A)
+		else if ((gcButtonsDown & PAD_BUTTON_A) || (wiiButtonsDown & WPAD_BUTTON_A))
 			game->AdvancePicture();
 
-		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 64, 16, 32));
+		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
 
 		Uint32 currentTime = SDL_GetTicks();
 		double deltaSeconds = (currentTime - previousTime) / 1000.0;
