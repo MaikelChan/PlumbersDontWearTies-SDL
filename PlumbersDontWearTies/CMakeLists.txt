@@ -10,6 +10,7 @@ add_executable (${PROJECT_NAME}
     "GameData.h"
     "main.cpp"
     "main.h"
+    ${APP_ICON_RESOURCE_WINDOWS}
 )
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBS})
