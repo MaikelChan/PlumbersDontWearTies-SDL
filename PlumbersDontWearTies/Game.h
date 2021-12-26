@@ -13,6 +13,7 @@
 #define WAV_FREQUENCY 11025 // Hz
 #define WAV_FORMAT 2 // 2 bytes, 16 bits
 #define WAV_CHANNELS 2 // Stereo
+#define WAV_SAMPLES 256
 
 // TODO: Does audio data in a WAV always start in the same offset?
 

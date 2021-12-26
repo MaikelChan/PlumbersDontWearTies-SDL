@@ -102,7 +102,7 @@ void Game::Start()
 	WindowSizeChanged(rw, rh);
 
 	currentGameState = GameStates::BeginScene;
-	currentSceneIndex = 0;
+	currentSceneIndex = 1; // Skip the PC CD-Rom info screens
 	lastDecisionSceneIndex = 0;
 	currentPictureIndex = 0;
 	currentDecisionIndex = -1;
@@ -116,7 +116,7 @@ void Game::Start()
 	desiredAudioSpec.freq = WAV_FREQUENCY;
 	desiredAudioSpec.format = AUDIO_S16;
 	desiredAudioSpec.channels = WAV_CHANNELS;
-	desiredAudioSpec.samples = 256;
+	desiredAudioSpec.samples = WAV_SAMPLES;
 	desiredAudioSpec.callback = AudioCallback;
 	audioDeviceId = SDL_OpenAudioDevice(NULL, 0, &desiredAudioSpec, &obtainedAudioSpec, /*SDL_AUDIO_ALLOW_FORMAT_CHANGE*/ 0);
 
