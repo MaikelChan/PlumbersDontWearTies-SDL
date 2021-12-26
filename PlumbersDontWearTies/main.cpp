@@ -1,4 +1,5 @@
 #include "main.h"
+#include "config.h"
 
 #include <iostream>
 
@@ -14,7 +15,8 @@ int main(int argc, char** args)
 
 	// Create window
 
-	SDL_Window* window = SDL_CreateWindow("Plumbers Don't Wear Ties", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+	std::string title = "Plumbers Don't Wear Ties - v";
+	SDL_Window* window = SDL_CreateWindow(title.append(PROJECT_VER).c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 	if (window == nullptr)
 	{

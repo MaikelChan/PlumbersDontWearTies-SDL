@@ -31,5 +31,3 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_LIST_DIR}/../Font.ttf" $<TARGET_FILE_DIR:${PROJECT_NAME}>/Data
     )
 endif()
-
-# TODO: Add tests and install targets if needed.
