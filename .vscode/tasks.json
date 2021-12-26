@@ -11,6 +11,13 @@
             "problemMatcher": []
         },
         {
+            "label": "Build CIA",
+            "type": "shell",
+            "command": "make -j8 V=1 BUILD_CIA=1",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
             "label": "Clean",
             "type": "shell",
             "command": "make clean",
@@ -18,14 +25,9 @@
             "problemMatcher": []
         },
         {
-            "label": "Send via WiiLoad",
+            "label": "Send via 3dslink",
             "type": "shell",
-            "options": {
-                "env": {
-                    "WIILOAD": "tcp:192.168.1.16"
-                }
-            },
-            "command": "wiiload PlumbersDontWearTies-SDL.dol",
+            "command": "3dslink PlumbersDontWearTies-SDL.3dsx -a 192.168.1.23",
             "group": "build",
             "problemMatcher": []
         }

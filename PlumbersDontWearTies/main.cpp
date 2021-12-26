@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-#include <gccore.h>
-#include <wiiuse/wpad.h>
+#include <3ds.h>
 
 int main(int argc, char **args)
 {
@@ -19,7 +18,7 @@ int main(int argc, char **args)
 
 	// Initialize video
 
-	SDL_Surface *screenSurface = SDL_SetVideoMode(640, 480, 16, SDL_DOUBLEBUF);
+	SDL_Surface *screenSurface = SDL_SetVideoMode(400, 240, 16, SDL_DOUBLEBUF);
 	if (screenSurface == nullptr)
 	{
 		printf("Unable to set video: %s\n", SDL_GetError());
@@ -28,9 +27,7 @@ int main(int argc, char **args)
 
 	// Initialize game controller
 
-	PAD_Init();
-	WPAD_Init();
-	SDL_ShowCursor(SDL_DISABLE);
+	//SDL_ShowCursor(SDL_DISABLE);
 
 	// Initialize the game
 
@@ -54,24 +51,26 @@ int main(int argc, char **args)
 			}
 		}
 
-		PAD_ScanPads();
-		WPAD_ScanPads();
+		hidScanInput();
+		u32 buttonsDown = hidKeysDown();
 
-		u32 gcButtonsDown = PAD_ButtonsDown(0);
-		u32 wiiButtonsDown = WPAD_ButtonsDown(0);
+		if (buttonsDown != 0)
+		{
+			printf("Buttons: %lu", buttonsDown);
+		}
 
-		if ((gcButtonsDown & PAD_TRIGGER_Z) || (wiiButtonsDown & WPAD_BUTTON_MINUS))
+		if (buttonsDown & KEY_SELECT)
 			game->Stop();
-		else if ((gcButtonsDown & PAD_BUTTON_B) || (wiiButtonsDown & WPAD_BUTTON_LEFT))
+		else if (buttonsDown & KEY_LEFT)
 			game->SelectDecision(0);
-		else if ((gcButtonsDown & PAD_BUTTON_Y) || (wiiButtonsDown & WPAD_BUTTON_UP))
+		else if (buttonsDown & KEY_UP)
 			game->SelectDecision(1);
-		else if ((gcButtonsDown & PAD_BUTTON_X) || (wiiButtonsDown & WPAD_BUTTON_RIGHT))
+		else if (buttonsDown & KEY_RIGHT)
 			game->SelectDecision(2);
-		else if ((gcButtonsDown & PAD_BUTTON_A) || (wiiButtonsDown & WPAD_BUTTON_A))
+		else if (buttonsDown & KEY_A)
 			game->AdvancePicture();
 
-		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
+		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 64, 16, 32));
 
 		Uint32 currentTime = SDL_GetTicks();
 		double deltaSeconds = (currentTime - previousTime) / 1000.0;

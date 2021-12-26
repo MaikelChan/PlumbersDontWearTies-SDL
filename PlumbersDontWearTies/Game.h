@@ -78,5 +78,5 @@ private:
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
 
-	static void AudioCallback(void* userdata, uint8_t* stream, int32_t len);
+	static void AudioCallback(void* userdata, uint8_t* stream, int len);
 };

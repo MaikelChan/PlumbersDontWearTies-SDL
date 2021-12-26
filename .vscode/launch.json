@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Citra",
+            "type": "gdb",
+            "request": "attach",
+            "remote": true,
+            "target": "192.168.1.128:24689",
+            "cwd": "${workspaceRoot}",
+            "executable": "PlumbersDontWearTies-SDL.elf",
+            "valuesFormatting": "parseText",
+            "gdbpath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb"
+        },
+        {
+            "name": "Attach to 3DS",
+            "type": "gdb",
+            "request": "attach",
+            "remote": true,
+            "target": "192.168.1.23:4000",
+            "cwd": "${workspaceRoot}",
+            "executable": "PlumbersDontWearTies-SDL.elf",
+            "valuesFormatting": "parseText",
+            "gdbpath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb"
+        }
+    ]
+}

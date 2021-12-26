@@ -19,7 +19,11 @@ CMakeSettings.json
 # Dependencies
 SDL2/
 
-# Wii
+# 3DS
 build/
+romfs/*
 *.elf
-*.dol
+*.3dsx
+*.cia
+*.smdh
+*.bnr

@@ -1,18 +1,17 @@
 {
     "configurations": [
         {
-            "name": "Wii",
+            "name": "3DS",
             "includePath": [
                 "${workspaceFolder}",
-                "${DEVKITPRO}/libogc/**",
-                "${DEVKITPRO}/portlibs/wii/include/**"
+                "${DEVKITPRO}/libctru/**",
+                "${DEVKITPRO}/portlibs/3ds/include/**",
+                "${workspaceFolder}/build/"
             ],
-            "defines":
-            [
-                "BIG_ENDIAN",
-                "HW_RVL"
+            "defines": [
+                "__3DS__"
             ],
-            "compilerPath": "${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-gcc",
+            "compilerPath": "${DEVKITPRO}/devkitARM/bin/arm-none-eabi-g++",
             "compilerArgs": []
         }
     ],

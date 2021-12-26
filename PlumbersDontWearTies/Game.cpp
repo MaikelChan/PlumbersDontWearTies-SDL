@@ -7,14 +7,20 @@ Game::Game(SDL_Surface *screenSurface)
 {
 	// Initialize class variables
 
-	baseDataPath = "sd:/apps/PlumbersDontWearTies/Data/";
+#if _ROMFS
+	romfsInit();
+	baseDataPath = "romfs:/";
+#else
+	baseDataPath = "sdmc:/3ds/PlumbersDontWearTies/";
+#endif
+
 	pathSeparator = "/";
 
 	gameData = nullptr;
 
 	Game::screenSurface = screenSurface;
-	rendererWidth = 640;
-	rendererHeight = 480;
+	rendererWidth = 400;
+	rendererHeight = 240;
 
 	currentTexture = nullptr;
 
@@ -60,7 +66,6 @@ Game::Game(SDL_Surface *screenSurface)
 	gameData = new _gameBinFile;
 	gameBinStream.read((char *)gameData, sizeof(_gameBinFile));
 	gameBinStream.close();
-	gameData->SwapEndianness();
 }
 
 Game::~Game()
@@ -81,6 +86,10 @@ Game::~Game()
 	{
 		TTF_Quit();
 	}
+
+#if _ROMFS
+	romfsExit();
+#endif
 }
 
 void Game::Start()
@@ -113,7 +122,7 @@ void Game::Start()
 	}
 	else
 	{
-		printf("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.\n", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
+		printf("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %lu.\n", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
 	}
 
 	SDL_PauseAudio(0);
@@ -483,7 +492,7 @@ bool Game::PrintText(const std::string text)
 		return false;
 	}
 
-	int32_t w, h;
+	int w, h;
 	if (TTF_SizeText(textFont, cText, &w, &h) < 0)
 	{
 		SDL_FreeSurface(textSurface);
@@ -502,7 +511,7 @@ void Game::ToUpperCase(std::string *text)
 		c = toupper(c);
 }
 
-void Game::AudioCallback(void *userdata, uint8_t *stream, int32_t len)
+void Game::AudioCallback(void *userdata, uint8_t *stream, int len)
 {
 	if (currentAudioStream.is_open())
 	{
@@ -521,15 +530,6 @@ void Game::AudioCallback(void *userdata, uint8_t *stream, int32_t len)
 			currentAudioStream.close();
 			currentAudioStream = std::ifstream();
 			currentAudioStreamLegth = 0;
-		}
-
-		// Swap each pair of bytes due to the Wii being Big Endian
-
-		for (int i = 0; i < bytesRead; i += 2)
-		{
-			uint8_t temp = stream[i + 0];
-			stream[i + 0] = stream[i + 1];
-			stream[i + 1] = temp;
 		}
 	}
 	else
