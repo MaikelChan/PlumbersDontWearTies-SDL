@@ -19,8 +19,8 @@ Game::Game(SDL_Surface *screenSurface)
 	gameData = nullptr;
 
 	Game::screenSurface = screenSurface;
-	rendererWidth = 400;
-	rendererHeight = 240;
+	rendererWidth = 640;
+	rendererHeight = 480;
 
 	currentTexture = nullptr;
 
@@ -422,7 +422,6 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 		return false;
 	}
 
-	//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
 	currentTexture = newTexture;
 	return true;

@@ -18,7 +18,7 @@ int main(int argc, char **args)
 
 	// Initialize video
 
-	SDL_Surface *screenSurface = SDL_SetVideoMode(400, 240, 16, SDL_DOUBLEBUF);
+	SDL_Surface *screenSurface = SDL_SetVideoMode(640, 480, 16, SDL_DOUBLEBUF | SDL_FITHEIGHT);
 	if (screenSurface == nullptr)
 	{
 		printf("Unable to set video: %s\n", SDL_GetError());
