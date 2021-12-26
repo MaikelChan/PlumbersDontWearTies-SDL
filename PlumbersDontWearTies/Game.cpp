@@ -191,8 +191,7 @@ void Game::Update(const double deltaSeconds)
 	{
 		_pictureDef *picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
 		std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
-		if (LoadTextureFromBMP(bmpPath))
-			printf("Loaded picture %s\n", bmpPath.c_str());
+		LoadTextureFromBMP(bmpPath);
 
 		currentWaitTimer = picture->duration / 10.0;
 		printf("Waiting %f seconds...\n", currentWaitTimer);
@@ -224,12 +223,11 @@ void Game::Update(const double deltaSeconds)
 		}
 
 		std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
-		if (LoadTextureFromBMP(bmpPath))
-			printf("Loaded picture %s\n", bmpPath.c_str());
+		LoadTextureFromBMP(bmpPath);
 
 		PrintText("Your score is: " + std::to_string(currentScore));
 
-		printf("%i decisions to choose, waiting for player input...\n", scene->numActions);
+		printf("%i decisions, waiting for input...\n", scene->numActions);
 
 		currentDecisionIndex = -1;
 		currentGameState = GameStates::WaitingDecision;
@@ -414,14 +412,18 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 	}
 
 	ToUpperCase(&fileName);
+
+	printf("Loading %s...", fileName.c_str());
 	SDL_Surface *newTexture = SDL_LoadBMP((baseDataPath + fileName).c_str());
 
 	if (newTexture == nullptr)
 	{
+		printf(" ERROR\n");
 		printf("Can't load bitmap into surface: %s\n", SDL_GetError());
 		return false;
 	}
 
+	printf(" OK\n");
 
 	currentTexture = newTexture;
 	return true;

@@ -44,7 +44,7 @@ GFXBUILD	:=	$(BUILD)
 #ROMFS		:=	romfs
 #GFXBUILD	:=	$(ROMFS)/gfx
 APP_TITLE	:= Plumbers Don't Wear Ties
-APP_DESCRIPTION := Nintendo 3DS port of Plumbers Don't Wear Ties
+APP_DESCRIPTION := Plumbers Don't Wear Ties
 APP_AUTHOR	:= PacoChan
 
 APP_PRODUCT_CODE	:=	CTR-P-PLUMBER
@@ -54,11 +54,11 @@ APP_VERSION_MINOR	:=	1
 APP_VERSION_MICRO	:=	0
 
 RSF					:=	$(TOPDIR)/ctr/template.rsf
-APP_LOGO			:=	$(TOPDIR)/ctr/hb_logo.bin
+#APP_LOGO			:=	$(TOPDIR)/ctr/hb_logo.bin
 APP_ICON			:=	$(TOPDIR)/ctr/icon.png
 
 BANNER_IMAGE_FILE	:=	$(TOPDIR)/ctr/banner.png
-BANNER_AUDIO_FILE	:=	$(TOPDIR)/ctr/audio_silent.wav
+BANNER_AUDIO_FILE	:=	$(TOPDIR)/ctr/audio.wav
 
 #---------------------------------------------------------------------------------
 # Build options
