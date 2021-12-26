@@ -13,6 +13,7 @@
 #define WAV_FREQUENCY 11025 // Hz
 #define WAV_FORMAT 2 // 2 bytes, 16 bits
 #define WAV_CHANNELS 2 // Stereo
+#define WAV_SAMPLES 1024 // SDL Wii always ignores this and sets it to 1152
 
 // TODO: Does audio data in a WAV always start in the same offset?
 
