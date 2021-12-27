@@ -194,7 +194,7 @@ void Game::Update(const double deltaSeconds)
 		LoadTextureFromBMP(bmpPath);
 
 		currentWaitTimer = picture->duration / 10.0;
-		printf("Waiting %f seconds...\n", currentWaitTimer);
+		printf("Waiting %.2f seconds...\n", currentWaitTimer);
 
 		currentGameState = GameStates::WaitingPicture;
 		break;
