@@ -16,7 +16,7 @@ This is a port for the Wii based on my SDL2 PC version of the game. This is the 
 The main requirement is to have [devkitPro](https://devkitpro.org).
 
 Follow the instructions to install devkitPro here: https://devkitpro.org/wiki/Getting_Started
-You will also need the Wii development package, and also the libraries wii-sdl and wii-sdl_mixer.
+You will also need the Wii development package, and also the libraries `wii-sdl` and `wii-sdl_ttf`.
 
 If you use Windows or Ubuntu, here are more detailed instructions.
 
