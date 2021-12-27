@@ -38,6 +38,15 @@ Game::Game(SDL_Surface *screenSurface)
 	currentScore = 0;
 	currentWaitTimer = 0.0;
 
+	loadingThread = nullptr;
+	mainThreadPriority = 0;
+	pictureLoadingInfo.Reset();
+
+	// Get main thread priority
+
+	svcGetThreadPriority(&mainThreadPriority, CUR_THREAD_HANDLE);
+	printf("Main thread priority: 0x%lx\n", mainThreadPriority);
+
 	// Load font
 
 	if (TTF_Init() < 0)
@@ -191,12 +200,28 @@ void Game::Update(const double deltaSeconds)
 	{
 		_pictureDef *picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
 		std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
-		LoadTextureFromBMP(bmpPath);
 
 		currentWaitTimer = picture->duration / 10.0;
 		printf("Waiting %.2f seconds...\n", currentWaitTimer);
 
-		currentGameState = GameStates::WaitingPicture;
+		currentGameState = GameStates::LoadingPicture;
+		LoadTextureFromBMP(bmpPath);
+
+		break;
+	}
+	case GameStates::LoadingPicture:
+	{
+		currentWaitTimer -= deltaSeconds;
+
+		if (pictureLoadingInfo.state == PictureLoadingInfo::States::LoadingFailure ||
+			pictureLoadingInfo.state == PictureLoadingInfo::States::LoadingSuccess)
+		{
+			currentTexture = pictureLoadingInfo.pictureSurface;
+			pictureLoadingInfo.Reset();
+
+			currentGameState = GameStates::WaitingPicture;
+		}
+
 		break;
 	}
 	case GameStates::WaitingPicture:
@@ -223,14 +248,27 @@ void Game::Update(const double deltaSeconds)
 		}
 
 		std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
+
+		currentGameState = GameStates::LoadingDecisionPicture;
 		LoadTextureFromBMP(bmpPath);
 
-		PrintText("Your score is: " + std::to_string(currentScore));
+		break;
+	}
+	case GameStates::LoadingDecisionPicture:
+	{
+		if (pictureLoadingInfo.state == PictureLoadingInfo::States::LoadingFailure ||
+			pictureLoadingInfo.state == PictureLoadingInfo::States::LoadingSuccess)
+		{
+			currentTexture = pictureLoadingInfo.pictureSurface;
+			pictureLoadingInfo.Reset();
 
-		printf("%i decisions, waiting for input...\n", scene->numActions);
+			currentDecisionIndex = -1;
 
-		currentDecisionIndex = -1;
-		currentGameState = GameStates::WaitingDecision;
+			PrintText("Your score is: " + std::to_string(currentScore));
+			printf("%i decisions, waiting for input...\n", scene->numActions);
+
+			currentGameState = GameStates::WaitingDecision;
+		}
 
 		break;
 	}
@@ -403,7 +441,28 @@ int16_t Game::GetSceneIndexFromID(const int16_t id)
 	return 0;
 }
 
-bool Game::LoadTextureFromBMP(std::string fileName)
+void LoadBmpThread(void *arg)
+{
+	PictureLoadingInfo *info = (PictureLoadingInfo *)arg;
+
+	SDL_Surface *newTexture = SDL_LoadBMP(info->pictureName.c_str());
+
+	if (newTexture == nullptr)
+	{
+		printf("ERROR\n");
+		printf("%s\n", SDL_GetError());
+		info->state = PictureLoadingInfo::States::LoadingFailure;
+		info->pictureSurface = nullptr;
+		return;
+	}
+
+	printf("OK\n");
+
+	info->state = PictureLoadingInfo::States::LoadingFailure;
+	info->pictureSurface = newTexture;
+}
+
+void Game::LoadTextureFromBMP(std::string fileName)
 {
 	if (currentTexture != nullptr)
 	{
@@ -413,20 +472,14 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 
 	ToUpperCase(&fileName);
 
-	printf("Loading %s...", fileName.c_str());
-	SDL_Surface *newTexture = SDL_LoadBMP((baseDataPath + fileName).c_str());
+	printf("Loading %s... ", fileName.c_str());
+	fflush(stdout);
 
-	if (newTexture == nullptr)
-	{
-		printf(" ERROR\n");
-		printf("Can't load bitmap into surface: %s\n", SDL_GetError());
-		return false;
-	}
+	pictureLoadingInfo.state = PictureLoadingInfo::States::Loading;
+	pictureLoadingInfo.pictureName = baseDataPath + fileName;
+	pictureLoadingInfo.pictureSurface = nullptr;
 
-	printf(" OK\n");
-
-	currentTexture = newTexture;
-	return true;
+	loadingThread = threadCreate(LoadBmpThread, (void *)(&pictureLoadingInfo), STACK_SIZE, mainThreadPriority - 1, -2, true);
 }
 
 bool Game::LoadAudioFromWAV(std::string fileName)

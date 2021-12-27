@@ -3,6 +3,8 @@
 #include <fstream>
 #include <string>
 
+#include <3ds.h>
+
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 
@@ -19,14 +21,42 @@
 
 #define WAV_DATA_START_POSITION 0x2c
 
+// Thread related stuff
+
+#define STACK_SIZE (4 * 1024)
+
 enum class GameStates
 {
 	Stopped,
 	BeginScene,
 	BeginPicture,
+	LoadingPicture,
 	WaitingPicture,
 	BeginDecision,
+	LoadingDecisionPicture,
 	WaitingDecision
+};
+
+struct PictureLoadingInfo
+{
+	enum class States
+	{
+		None,
+		Loading,
+		LoadingSuccess,
+		LoadingFailure
+	};
+
+	States state;
+	std::string pictureName;
+	SDL_Surface *pictureSurface;
+
+	void Reset()
+	{
+		state = States::None;
+		pictureName = std::string();
+		pictureSurface = nullptr;
+	}
 };
 
 class Game
@@ -57,6 +87,10 @@ private:
 	int32_t currentScore;
 	double currentWaitTimer;
 
+	Thread loadingThread;
+	s32 mainThreadPriority;
+	PictureLoadingInfo pictureLoadingInfo;
+
 public:
 	Game(SDL_Surface* screenSurface);
 	~Game();
@@ -73,7 +107,7 @@ public:
 private:
 	void SetNextScene(const _actionDef* action);
 	int16_t GetSceneIndexFromID(const int16_t id);
-	bool LoadTextureFromBMP(std::string fileName);
+	void LoadTextureFromBMP(std::string fileName);
 	bool LoadAudioFromWAV(std::string fileName);
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
