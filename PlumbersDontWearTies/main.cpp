@@ -81,7 +81,6 @@ int main(int argc, char **args)
 	delete game;
 	game = nullptr;
 
-	SDL_FreeSurface(screenSurface);
 	SDL_Quit();
 
 	return 0;
