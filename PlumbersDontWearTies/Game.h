@@ -8,6 +8,11 @@
 
 #include "GameData.h"
 
+// Video defines
+
+#define VIDEO_BIT_DEPTH 24
+#define TEXT_SCALE_MULTIPLIER (1.0 / 960.0)
+
 // Format of game's WAV files
 
 #define WAV_FREQUENCY 11025 // Hz
@@ -38,9 +43,6 @@ private:
 	_gameBinFile* gameData;
 
 	SDL_Surface* screenSurface;
-	int32_t rendererWidth;
-	int32_t rendererHeight;
-
 	SDL_Surface* currentTexture;
 
 	TTF_Font* textFont;
@@ -58,12 +60,13 @@ private:
 	double currentWaitTimer;
 
 public:
-	Game(SDL_Surface* screenSurface);
+	Game();
 	~Game();
 
 	void Start();
 	void Stop();
 	void Update(const double deltaSeconds);
+	void Render();
 	void SelectDecision(const int8_t decisionIndex);
 	void AdvancePicture();
 
@@ -77,6 +80,8 @@ private:
 	bool LoadAudioFromWAV(std::string fileName);
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
+
+	void SetTopScreen(const int width, const int height);
 
 	static void AudioCallback(void* userdata, uint8_t* stream, int len);
 };

@@ -16,23 +16,17 @@ int main(int argc, char **args)
 
 	atexit(SDL_Quit);
 
-	// Initialize video
+	// Initialize the game
 
-	SDL_Surface *screenSurface = SDL_SetVideoMode(640, 480, 16, SDL_FITHEIGHT | SDL_CONSOLEBOTTOM);
-	if (screenSurface == nullptr)
-	{
-		printf("Unable to set video: %s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
-	}
+	Game* game = new Game();
 
 	// Initialize game controller
 
 	SDL_ShowCursor(SDL_DISABLE);
 	hidInit();
 
-	// Initialize the game
+	// Start game
 
-	Game *game = new Game(screenSurface);
 	game->Start();
 
 	Uint32 previousTime = SDL_GetTicks();
@@ -42,7 +36,7 @@ int main(int argc, char **args)
 		// Input needs to be read before polling SDL events
 		hidScanInput();
 		u32 buttonsDown = hidKeysDown();
-		
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -67,15 +61,12 @@ int main(int argc, char **args)
 		else if (buttonsDown & KEY_A)
 			game->AdvancePicture();
 
-		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
-
 		Uint32 currentTime = SDL_GetTicks();
 		double deltaSeconds = (currentTime - previousTime) / 1000.0;
 		previousTime = currentTime;
 
 		game->Update(deltaSeconds);
-
-		SDL_Flip(screenSurface);
+		game->Render();
 	}
 
 	delete game;

@@ -3,7 +3,7 @@
 std::ifstream Game::currentAudioStream = std::ifstream();
 int32_t Game::currentAudioStreamLegth = 0;
 
-Game::Game(SDL_Surface *screenSurface)
+Game::Game()
 {
 	// Initialize class variables
 
@@ -18,10 +18,7 @@ Game::Game(SDL_Surface *screenSurface)
 
 	gameData = nullptr;
 
-	Game::screenSurface = screenSurface;
-	rendererWidth = 640;
-	rendererHeight = 480;
-
+	screenSurface = nullptr;
 	currentTexture = nullptr;
 
 	textFont = nullptr;
@@ -37,6 +34,15 @@ Game::Game(SDL_Surface *screenSurface)
 	currentDecisionIndex = -1;
 	currentScore = 0;
 	currentWaitTimer = 0.0;
+
+	// Initialize console in the bottom screen
+
+	screenSurface = SDL_SetVideoMode(320, 240, VIDEO_BIT_DEPTH, SDL_CONSOLEBOTTOM);
+	if (screenSurface == nullptr)
+	{
+		printf("Unable to initialize bottom screen: %s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+	}
 
 	// Load font
 
@@ -248,59 +254,37 @@ void Game::Update(const double deltaSeconds)
 		break;
 	}
 	}
+}
+
+void Game::Render()
+{
+	// Clear screen
+
+	SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
 
 	// Render picture
 
-	if (currentTexture == nullptr)
+	if (currentTexture != nullptr)
 	{
-		return;
+		SDL_BlitSurface(currentTexture, NULL, screenSurface, NULL);
 	}
-
-	SDL_Rect textureRect;
-
-	float rendererAspectRatio = static_cast<float>(rendererWidth) / rendererHeight;
-	float textureAspectRatio = static_cast<float>(currentTexture->w) / currentTexture->h;
-
-	if (rendererAspectRatio > textureAspectRatio)
-	{
-		int32_t gameWidth = static_cast<int32_t>(rendererHeight * textureAspectRatio);
-		textureRect.x = (rendererWidth - gameWidth) >> 1;
-		textureRect.y = 0;
-		textureRect.w = gameWidth;
-		textureRect.h = rendererHeight;
-	}
-	else
-	{
-		int32_t gameHeight = static_cast<int32_t>(rendererWidth / textureAspectRatio);
-		textureRect.x = 0;
-		textureRect.y = (rendererHeight - gameHeight) >> 1;
-		textureRect.w = rendererWidth;
-		textureRect.h = gameHeight;
-	}
-
-	SDL_BlitSurface(currentTexture, NULL, screenSurface, &textureRect);
 
 	// Render text
 
 	if (currentTextTexture != nullptr)
 	{
-		float scale;
-
-		if (rendererAspectRatio > textureAspectRatio)
-			scale = static_cast<float>(rendererHeight) / currentTexture->h;
-		else
-			scale = static_cast<float>(rendererWidth) / currentTexture->w;
-
-		scale *= 0.5;
+		float scale = screenSurface->h * TEXT_SCALE_MULTIPLIER;
 
 		SDL_Rect textRect;
-		textRect.x = textureRect.x + static_cast<int32_t>(32 * scale);
-		textRect.y = textureRect.y + textureRect.h - static_cast<int32_t>(80 * scale);
+		textRect.x = static_cast<int32_t>(32 * scale);
+		textRect.y = screenSurface->h - static_cast<int32_t>(100 * scale);
 		textRect.w = static_cast<int32_t>(currentTextTexture->w * scale);
 		textRect.h = static_cast<int32_t>(currentTextTexture->h * scale);
 
 		SDL_BlitSurface(currentTextTexture, NULL, screenSurface, &textRect);
 	}
+
+	SDL_Flip(screenSurface);
 }
 
 void Game::SelectDecision(const int8_t decision)
@@ -413,17 +397,19 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 
 	ToUpperCase(&fileName);
 
-	printf("Loading %s...", fileName.c_str());
+	printf("Loading %s... ", fileName.c_str());
 	SDL_Surface *newTexture = SDL_LoadBMP((baseDataPath + fileName).c_str());
 
 	if (newTexture == nullptr)
 	{
-		printf(" ERROR\n");
+		printf("ERROR\n");
 		printf("Can't load bitmap into surface: %s\n", SDL_GetError());
 		return false;
 	}
 
-	printf(" OK\n");
+	printf("OK (%ix%i)\n", newTexture->w, newTexture->h);
+
+	SetTopScreen(newTexture->w, newTexture->h);
 
 	currentTexture = newTexture;
 	return true;
@@ -510,6 +496,28 @@ void Game::ToUpperCase(std::string *text)
 {
 	for (auto &c : *text)
 		c = toupper(c);
+}
+
+void Game::SetTopScreen(const int width, const int height)
+{
+	int previousWidth = 0;
+	int previousHeight = 0;
+
+	if (screenSurface != nullptr)
+	{
+		previousWidth = screenSurface->w;
+		previousHeight = screenSurface->h;
+	}
+
+	if (width != previousWidth || height != previousHeight)
+	{
+		screenSurface = SDL_SetVideoMode(width, height, VIDEO_BIT_DEPTH, SDL_TOPSCR | SDL_FITHEIGHT);
+		if (screenSurface == nullptr)
+		{
+			printf("Unable to set top screen (%ix%i): %s\n", width, height, SDL_GetError());
+			exit(EXIT_FAILURE);
+		}
+	}
 }
 
 void Game::AudioCallback(void *userdata, uint8_t *stream, int len)
