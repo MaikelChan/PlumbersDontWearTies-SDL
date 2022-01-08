@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <switch.h>
+
 int main(int argc, char** args)
 {
 	// Initialize SDL
@@ -31,34 +33,18 @@ int main(int argc, char** args)
 	{
 		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
 		SDL_Quit();
-		return -1;
+		return 1;
 	}
 
 	// Initialize game controller
 
-	controller = nullptr;
-	controllerInstanceID = -1;
-	OpenFirstAvailableController();
-
-	while (true)
+	SDL_Joystick *joystick = SDL_JoystickOpen(0);
+	if (joystick == nullptr)
 	{
-		SDL_SetRenderDrawColor(renderer, 64, 16, 32, 255);
-		SDL_RenderClear(renderer);
-
-		SDL_RenderPresent(renderer);
+		SDL_LogCritical(0, "Could not open joystick: %s\n", SDL_GetError());
+		SDL_Quit();
+		return 1;
 	}
-
-	if (controller != nullptr)
-	{
-		SDL_GameControllerClose(controller);
-		controller = nullptr;
-	}
-
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-
-	return 0;
 
 	// Initialize the game
 
@@ -67,7 +53,7 @@ int main(int argc, char** args)
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
 
-	while (game->IsRunning())
+	while (game->IsRunning() && appletMainLoop())
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
@@ -79,90 +65,24 @@ int main(int argc, char** args)
 					game->Stop();
 					break;
 				}
-				case SDL_KEYDOWN:
+				case SDL_JOYBUTTONDOWN:
 				{
-					switch (event.key.keysym.sym)
+					switch (event.jbutton.button)
 					{
-						case SDLK_ESCAPE:
+						case JOY_MINUS:
 							game->Stop();
 							break;
-						case SDLK_1:
-						case SDLK_KP_1:
+						case JOY_LEFT:
 							game->SelectDecision(0);
 							break;
-						case SDLK_2:
-						case SDLK_KP_2:
+						case JOY_UP:
 							game->SelectDecision(1);
 							break;
-						case SDLK_3:
-						case SDLK_KP_3:
+						case JOY_RIGHT:
 							game->SelectDecision(2);
 							break;
-						case SDLK_RIGHT:
+						case JOY_A:
 							game->AdvancePicture();
-							break;
-						case SDLK_RETURN:
-							if (event.key.keysym.mod & KMOD_ALT)
-							{
-								ToggleFullscreen(window);
-							}
-							break;
-					}
-
-					break;
-				}
-				case SDL_CONTROLLERBUTTONDOWN:
-				{
-					switch (event.cbutton.button)
-					{
-						case SDL_CONTROLLER_BUTTON_BACK:
-							game->Stop();
-							break;
-						case SDL_CONTROLLER_BUTTON_X:
-							game->SelectDecision(0);
-							break;
-						case SDL_CONTROLLER_BUTTON_Y:
-							game->SelectDecision(1);
-							break;
-						case SDL_CONTROLLER_BUTTON_B:
-							game->SelectDecision(2);
-							break;
-						case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-							game->AdvancePicture();
-							break;
-						case SDL_CONTROLLER_BUTTON_START:
-							ToggleFullscreen(window);
-							break;
-					}
-
-					break;
-				}
-				case SDL_CONTROLLERDEVICEADDED:
-				{
-					OpenFirstAvailableController();
-					break;
-				}
-				case SDL_CONTROLLERDEVICEREMOVED:
-				{
-					if (event.cdevice.which == controllerInstanceID && controller != nullptr)
-					{
-						SDL_GameControllerClose(controller);
-						controller = nullptr;
-						controllerInstanceID = -1;
-
-						SDL_Log("Controller has been disconnected: instance ID %i", event.cdevice.which);
-
-						OpenFirstAvailableController();
-					}
-
-					break;
-				}
-				case SDL_WINDOWEVENT:
-				{
-					switch (event.window.event)
-					{
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							game->WindowSizeChanged(event.window.data1, event.window.data2);
 							break;
 					}
 
@@ -186,52 +106,10 @@ int main(int argc, char** args)
 	delete game;
 	game = nullptr;
 
-	if (controller != nullptr)
-	{
-		SDL_GameControllerClose(controller);
-		controller = nullptr;
-	}
-
+	SDL_JoystickClose(joystick);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
 	return 0;
-}
-
-void ToggleFullscreen(SDL_Window* window)
-{
-	bool isFullscreen = SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
-
-	if (isFullscreen)
-	{
-		if (SDL_SetWindowFullscreen(window, 0) < 0)
-			SDL_LogError(0, "Can't set the game to window mode: %s", SDL_GetError());
-	}
-	else
-	{
-		if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0)
-			SDL_LogError(0, "Can't set the game to full screen mode: %s", SDL_GetError());
-	}
-}
-
-void OpenFirstAvailableController()
-{
-	if (controller != nullptr) return;
-
-	for (int j = 0; j < SDL_NumJoysticks(); j++)
-	{
-		if (!SDL_IsGameController(j)) continue;
-
-		controller = SDL_GameControllerOpen(j);
-		if (controller != nullptr)
-		{
-			SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
-			controllerInstanceID = SDL_JoystickInstanceID(joystick);
-
-			SDL_Log("Found new controller: index %i, instance ID %i, name %s", j, controllerInstanceID, SDL_GameControllerName(controller));
-
-			return;
-		}
-	}
 }

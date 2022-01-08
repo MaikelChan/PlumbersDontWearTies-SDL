@@ -7,9 +7,8 @@ Game::Game(SDL_Renderer* renderer)
 {
 	// Initialize class variables
 
-	baseDataPath = "Data";
+	baseDataPath = "sdmc:/PlumbersDontWearTies/";
 	pathSeparator = "/";
-	baseDataPath = baseDataPath + pathSeparator;
 
 	gameData = nullptr;
 

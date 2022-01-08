@@ -4,9 +4,9 @@
             "name": "Switch",
             "includePath": [
                 "${workspaceFolder}",
+                "${workspaceFolder}/PlumbersDontWearTies/",
                 "${DEVKITPRO}/libnx/**",
-                "${DEVKITPRO}/portlibs/switch/include/**",
-                "${workspaceFolder}/build/"
+                "${DEVKITPRO}/portlibs/switch/include/**"
             ],
             "defines": [
                 "__SWITCH__"
