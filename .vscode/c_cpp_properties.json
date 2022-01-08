@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Switch",
+            "includePath": [
+                "${workspaceFolder}",
+                "${DEVKITPRO}/libnx/**",
+                "${DEVKITPRO}/portlibs/switch/include/**",
+                "${workspaceFolder}/build/"
+            ],
+            "defines": [
+                "__SWITCH__"
+            ],
+            "compilerPath": "${DEVKITPRO}/devkitA64/bin/aarch64-none-elf-g++",
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}

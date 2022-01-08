@@ -19,3 +19,8 @@ CMakeSettings.json
 
 # Dependencies
 SDL2/
+
+# Switch
+*.elf
+*.nacp
+*.nro

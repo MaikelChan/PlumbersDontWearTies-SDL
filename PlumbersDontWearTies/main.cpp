@@ -1,5 +1,4 @@
 #include "main.h"
-#include "config.h"
 
 #include <iostream>
 
@@ -7,7 +6,7 @@ int main(int argc, char** args)
 {
 	// Initialize SDL
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
 	{
 		SDL_LogCritical(0, "Error initializing SDL: %s", SDL_GetError());
 		return 1;
@@ -15,22 +14,23 @@ int main(int argc, char** args)
 
 	// Create window
 
-	std::string title = "Plumbers Don't Wear Ties - v";
-	SDL_Window* window = SDL_CreateWindow(title.append(PROJECT_VER).c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 960, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+	SDL_Window* window = SDL_CreateWindow("Plumbers Don't Wear Ties", 0, 0, 1920, 1080, 0);
 
 	if (window == nullptr)
 	{
 		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
+		SDL_Quit();
 		return 1;
 	}
 
 	// Initialize renderer
 
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{
 		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
+		SDL_Quit();
 		return -1;
 	}
 
@@ -39,6 +39,26 @@ int main(int argc, char** args)
 	controller = nullptr;
 	controllerInstanceID = -1;
 	OpenFirstAvailableController();
+
+	while (true)
+	{
+		SDL_SetRenderDrawColor(renderer, 64, 16, 32, 255);
+		SDL_RenderClear(renderer);
+
+		SDL_RenderPresent(renderer);
+	}
+
+	if (controller != nullptr)
+	{
+		SDL_GameControllerClose(controller);
+		controller = nullptr;
+	}
+
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+
+	return 0;
 
 	// Initialize the game
 
