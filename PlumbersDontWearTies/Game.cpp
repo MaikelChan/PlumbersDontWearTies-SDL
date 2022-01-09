@@ -195,8 +195,7 @@ void Game::Update(const double deltaSeconds)
 		{
 			_pictureDef* picture = &gameData->pictures[scene->pictureIndex + currentPictureIndex];
 			std::string bmpPath = scene->szSceneFolder + pathSeparator + picture->szBitmapFile;
-			if (LoadTextureFromBMP(bmpPath))
-				SDL_Log("Loaded picture %s", bmpPath.c_str());
+			LoadTextureFromBMP(bmpPath);
 
 			currentWaitTimer = picture->duration / 10.0;
 			SDL_Log("Waiting %f seconds...", currentWaitTimer);
@@ -228,8 +227,7 @@ void Game::Update(const double deltaSeconds)
 			}
 
 			std::string bmpPath = scene->szSceneFolder + pathSeparator + scene->szDecisionBmp;
-			if (LoadTextureFromBMP(bmpPath))
-				SDL_Log("Loaded picture %s", bmpPath.c_str());
+			LoadTextureFromBMP(bmpPath);
 
 			PrintText("Your score is: " + std::to_string(currentScore));
 
@@ -419,18 +417,16 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 	}
 
 	ToUpperCase(&fileName);
-	SDL_Surface* bmpSurface = SDL_LoadBMP((baseDataPath + fileName).c_str());
+	SDL_Surface* newSurface = SDL_LoadBMP((baseDataPath + fileName).c_str());
 
-	if (bmpSurface == nullptr)
+	if (newSurface == nullptr)
 	{
 		SDL_LogError(0, "Can't load bitmap: %s", SDL_GetError());
 		return false;
 	}
 
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-	SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, bmpSurface);
-
-	SDL_FreeSurface(bmpSurface);
+	SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, newSurface);
 
 	if (newTexture == nullptr)
 	{
@@ -438,14 +434,14 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 		return false;
 	}
 
-	if (SDL_QueryTexture(newTexture, NULL, NULL, &currentTextureWidth, &currentTextureHeight) < 0)
-	{
-		SDL_DestroyTexture(newTexture);
-		SDL_LogError(0, "Can't query texture: %s", SDL_GetError());
-		return false;
-	}
-
+	currentTextureWidth = newSurface->w;
+	currentTextureHeight = newSurface->h;
 	currentTexture = newTexture;
+
+	SDL_FreeSurface(newSurface);
+
+	SDL_Log("Loaded picture %s (%ix%i)", fileName.c_str(), currentTextureWidth, currentTextureHeight);
+
 	return true;
 }
 
