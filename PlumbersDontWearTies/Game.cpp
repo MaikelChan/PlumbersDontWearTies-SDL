@@ -302,12 +302,13 @@ void Game::Render()
 			SDL_SetRenderDrawColor(renderer, alpha, alpha, alpha, 255);
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_MOD);
 
-			SDL_Rect rect;
-			rect.x = textureRect.x + static_cast<int32_t>(scene->actions[currentDecisionIndex].cHotspotTopLeft.x * scale);
-			rect.y = textureRect.y + static_cast<int32_t>(scene->actions[currentDecisionIndex].cHotspotTopLeft.y * scale);
-			rect.w = static_cast<int32_t>((scene->actions[currentDecisionIndex].cHotspotBottomRigh.x - scene->actions[currentDecisionIndex].cHotspotTopLeft.x) * scale);
-			rect.h = static_cast<int32_t>((scene->actions[currentDecisionIndex].cHotspotBottomRigh.y - scene->actions[currentDecisionIndex].cHotspotTopLeft.y) * scale);
-			SDL_RenderFillRect(renderer, &rect);
+			SDL_Rect selectionRect;
+			selectionRect.x = scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
+			selectionRect.y = scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
+			selectionRect.w = scene->actions[currentDecisionIndex].cHotspotBottomRigh.x - scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
+			selectionRect.h = scene->actions[currentDecisionIndex].cHotspotBottomRigh.y - scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
+			ScaleRect(&selectionRect, &textureRect, scale);
+			SDL_RenderFillRect(renderer, &selectionRect);
 		}
 
 		// Render text
@@ -315,10 +316,11 @@ void Game::Render()
 		scale *= 0.5;
 
 		SDL_Rect textRect;
-		textRect.x = textureRect.x + static_cast<int32_t>(32 * scale);
-		textRect.y = textureRect.y + textureRect.h - static_cast<int32_t>(80 * scale);
-		textRect.w = static_cast<int32_t>(currentTextTextureWidth * scale);
-		textRect.h = static_cast<int32_t>(currentTextTextureHeight * scale);
+		textRect.x = 32;
+		textRect.y = static_cast<int32_t>(textureRect.h / scale) - 80;
+		textRect.w = currentTextTextureWidth;
+		textRect.h = currentTextTextureHeight;
+		ScaleRect(&textRect, &textureRect, scale);
 
 		SDL_RenderCopy(renderer, currentTextTexture, NULL, &textRect);
 	}
@@ -610,6 +612,14 @@ void Game::ToUpperCase(std::string* text)
 {
 	for (auto& c : *text)
 		c = toupper(c);
+}
+
+void Game::ScaleRect(SDL_Rect* rectToScale, const SDL_Rect* textureRect, const float scale)
+{
+	rectToScale->x = textureRect->x + static_cast<int32_t>(rectToScale->x * scale);
+	rectToScale->y = textureRect->y + static_cast<int32_t>(rectToScale->y * scale);
+	rectToScale->w = static_cast<int32_t>(rectToScale->w * scale);
+	rectToScale->h = static_cast<int32_t>(rectToScale->h * scale);
 }
 
 void Game::AudioCallback(void* userdata, uint8_t* stream, int32_t len)

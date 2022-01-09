@@ -86,6 +86,7 @@ private:
 	bool LoadAudioFromWAV(std::string fileName);
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
+	void ScaleRect(SDL_Rect* rectToScale, const SDL_Rect* textureRect, const float scale);
 
 	static void AudioCallback(void* userdata, uint8_t* stream, int32_t len);
 };
