@@ -21,6 +21,7 @@ int main(int argc, char** args)
 	if (window == nullptr)
 	{
 		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
+		SDL_Quit();
 		return 1;
 	}
 
@@ -31,6 +32,7 @@ int main(int argc, char** args)
 	if (renderer == nullptr)
 	{
 		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
+		SDL_Quit();
 		return -1;
 	}
 

@@ -490,7 +490,6 @@ bool Game::PrintText(const std::string text)
 
 	if (text.empty())
 	{
-		SDL_Log("Text has been cleared.");
 		return true;
 	}
 
