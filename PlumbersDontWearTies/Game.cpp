@@ -169,8 +169,6 @@ void Game::Update(const double deltaSeconds)
 {
 	if (!IsInitialized()) return;
 
-	// Update game
-
 	_sceneDef* scene = &gameData->scenes[currentSceneIndex];
 
 	switch (currentGameState)
@@ -240,18 +238,21 @@ void Game::Update(const double deltaSeconds)
 		}
 		case GameStates::WaitingDecision:
 		{
-			if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
-			{
-				SDL_Log("Selected decision: %i", currentDecisionIndex + 1);
-				PrintText(std::string());
-
-				currentScore += scene->actions[currentDecisionIndex].scoreDelta;
-				SetNextScene(&scene->actions[currentDecisionIndex]);
-			}
-
+			break;
+		}
+		default:
+		{
+			SDL_LogError(0, "State %i is not implemented.", currentGameState);
 			break;
 		}
 	}
+}
+
+void Game::Render()
+{
+	if (!IsInitialized()) return;
+
+	_sceneDef* scene = &gameData->scenes[currentSceneIndex];
 
 	// Render picture
 
@@ -277,11 +278,12 @@ void Game::Update(const double deltaSeconds)
 		textureRect.h = gameHeight;
 	}
 
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 	SDL_RenderCopy(renderer, currentTexture, NULL, &textureRect);
 
-	// Render text
+	// Render decision screen
 
-	if (currentTextTexture != nullptr)
+	if (currentGameState == GameStates::WaitingDecision)
 	{
 		float scale;
 
@@ -289,6 +291,26 @@ void Game::Update(const double deltaSeconds)
 			scale = static_cast<float>(rendererHeight) / currentTextureHeight;
 		else
 			scale = static_cast<float>(rendererWidth) / currentTextureWidth;
+
+		// Render selection rect
+
+		if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
+		{
+			float totalSeconds = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
+			uint8_t alpha = static_cast<uint8_t>((sin(totalSeconds * M_PI * 2) * 0.25 + 0.75) * 255);
+
+			SDL_SetRenderDrawColor(renderer, alpha, alpha, alpha, 255);
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_MOD);
+
+			SDL_Rect rect;
+			rect.x = textureRect.x + static_cast<int32_t>(scene->actions[currentDecisionIndex].cHotspotTopLeft.x * scale);
+			rect.y = textureRect.y + static_cast<int32_t>(scene->actions[currentDecisionIndex].cHotspotTopLeft.y * scale);
+			rect.w = static_cast<int32_t>((scene->actions[currentDecisionIndex].cHotspotBottomRigh.x - scene->actions[currentDecisionIndex].cHotspotTopLeft.x) * scale);
+			rect.h = static_cast<int32_t>((scene->actions[currentDecisionIndex].cHotspotBottomRigh.y - scene->actions[currentDecisionIndex].cHotspotTopLeft.y) * scale);
+			SDL_RenderFillRect(renderer, &rect);
+		}
+
+		// Render text
 
 		scale *= 0.5;
 
@@ -315,37 +337,86 @@ void Game::WindowSizeChanged(const int32_t width, const int32_t height)
 void Game::SelectDecision(const int8_t decision)
 {
 	if (!IsInitialized()) return;
+	if (currentGameState != GameStates::WaitingDecision) return;
+
+	if (decision < 0) return;
+	if (decision >= gameData->scenes[currentSceneIndex].numActions) return;
+
 	currentDecisionIndex = decision;
+}
+
+void Game::SelectNextDecision()
+{
+	if (!IsInitialized()) return;
+	if (currentGameState != GameStates::WaitingDecision) return;
+
+	if (currentDecisionIndex < 0)
+	{
+		currentDecisionIndex = 0;
+		return;
+	}
+
+	int16_t numActions = gameData->scenes[currentSceneIndex].numActions;
+	if (currentDecisionIndex < numActions - 1) currentDecisionIndex++;
+}
+
+void Game::SelectPreviousDecision()
+{
+	if (!IsInitialized()) return;
+	if (currentGameState != GameStates::WaitingDecision) return;
+
+	if (currentDecisionIndex < 0)
+	{
+		currentDecisionIndex = gameData->scenes[currentSceneIndex].numActions - 1;
+		return;
+	}
+
+	if (currentDecisionIndex > 0) currentDecisionIndex--;
 }
 
 void Game::AdvancePicture()
 {
 	if (!IsInitialized()) return;
-	if (currentGameState != GameStates::WaitingPicture) return;
 
-	if (currentAudioStream.is_open())
+	_sceneDef* scene = &gameData->scenes[currentSceneIndex];
+
+	if (currentGameState == GameStates::WaitingPicture)
 	{
-		// Calculate elapsed time since beginning of scene
-
-		int16_t startPictureIndex = gameData->scenes[currentSceneIndex].pictureIndex;
-		int16_t endPictureIndex = startPictureIndex + currentPictureIndex + 1;
-
-		double elapsedTime = 0.0;
-		for (int16_t t = startPictureIndex; t < endPictureIndex; t++)
+		if (currentAudioStream.is_open())
 		{
-			elapsedTime += gameData->pictures[t].duration / 10.0;
+			// Calculate elapsed time since beginning of scene
+
+			int16_t startPictureIndex = scene->pictureIndex;
+			int16_t endPictureIndex = startPictureIndex + currentPictureIndex + 1;
+
+			double elapsedTime = 0.0;
+			for (int16_t t = startPictureIndex; t < endPictureIndex; t++)
+			{
+				elapsedTime += gameData->pictures[t].duration / 10.0;
+			}
+
+			int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT * WAV_CHANNELS);
+
+			// Make sure samplePosition is even, not odd, as audio is 16bit.
+
+			samplePosition &= ~1;
+
+			currentAudioStream.seekg(WAV_DATA_START_POSITION + samplePosition, std::ios_base::beg);
 		}
 
-		int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT * WAV_CHANNELS);
-
-		// Make sure samplePosition is even, not odd, as audio is 16bit.
-
-		samplePosition &= ~1;
-
-		currentAudioStream.seekg(WAV_DATA_START_POSITION + samplePosition, std::ios_base::beg);
+		currentWaitTimer = 0;
 	}
+	else if (currentGameState == GameStates::WaitingDecision)
+	{
+		if (currentDecisionIndex < 0) return;
+		if (currentDecisionIndex >= scene->numActions) return;
 
-	currentWaitTimer = 0;
+		SDL_Log("Selected decision: %i", currentDecisionIndex + 1);
+		PrintText(std::string());
+
+		currentScore += scene->actions[currentDecisionIndex].scoreDelta;
+		SetNextScene(&scene->actions[currentDecisionIndex]);
+	}
 }
 
 void Game::SetNextScene(const _actionDef* action)

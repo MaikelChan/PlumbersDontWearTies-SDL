@@ -69,8 +69,11 @@ public:
 	void Start();
 	void Stop();
 	void Update(const double deltaSeconds);
+	void Render();
 	void WindowSizeChanged(const int32_t width, const int32_t height);
 	void SelectDecision(const int8_t decisionIndex);
+	void SelectNextDecision();
+	void SelectPreviousDecision();
 	void AdvancePicture();
 
 	inline bool IsRunning() { return currentGameState != GameStates::Stopped; }

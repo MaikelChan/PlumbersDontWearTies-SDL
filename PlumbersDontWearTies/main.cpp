@@ -48,6 +48,7 @@ int main(int argc, char** args)
 	game->Start();
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
+	int16_t previousControllerYAxis = 0;
 
 	while (game->IsRunning())
 	{
@@ -80,7 +81,13 @@ int main(int argc, char** args)
 						case SDLK_KP_3:
 							game->SelectDecision(2);
 							break;
-						case SDLK_RIGHT:
+						case SDLK_DOWN:
+							game->SelectNextDecision();
+							break;
+						case SDLK_UP:
+							game->SelectPreviousDecision();
+							break;
+						case SDLK_SPACE:
 							game->AdvancePicture();
 							break;
 						case SDLK_RETURN:
@@ -100,16 +107,13 @@ int main(int argc, char** args)
 						case SDL_CONTROLLER_BUTTON_BACK:
 							game->Stop();
 							break;
-						case SDL_CONTROLLER_BUTTON_X:
-							game->SelectDecision(0);
+						case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+							game->SelectNextDecision();
 							break;
-						case SDL_CONTROLLER_BUTTON_Y:
-							game->SelectDecision(1);
+						case SDL_CONTROLLER_BUTTON_DPAD_UP:
+							game->SelectPreviousDecision();
 							break;
-						case SDL_CONTROLLER_BUTTON_B:
-							game->SelectDecision(2);
-							break;
-						case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+						case SDL_CONTROLLER_BUTTON_A:
 							game->AdvancePicture();
 							break;
 						case SDL_CONTROLLER_BUTTON_START:
@@ -118,6 +122,21 @@ int main(int argc, char** args)
 					}
 
 					break;
+				}
+				case SDL_CONTROLLERAXISMOTION:
+				{
+					switch (event.caxis.axis)
+					{
+						case SDL_CONTROLLER_AXIS_LEFTY:
+							if (previousControllerYAxis <= 24000 && event.caxis.value > 24000)
+								game->SelectNextDecision();
+							else if (previousControllerYAxis >= -24000 && event.caxis.value < -24000)
+								game->SelectPreviousDecision();
+
+							previousControllerYAxis = event.caxis.value;
+
+							break;
+					}
 				}
 				case SDL_CONTROLLERDEVICEADDED:
 				{
@@ -161,6 +180,7 @@ int main(int argc, char** args)
 		previousTime = currentTime;
 
 		game->Update(deltaSeconds);
+		game->Render();
 
 		SDL_RenderPresent(renderer);
 	}
