@@ -73,13 +73,11 @@ After a successful build, you will get a file called `PlumbersDontWearTies-SDL.3
 
 ## How to play
 
-| Button      | Action                                            |
-|-------------|---------------------------------------------------|
-| D-Pad Left  | Select first option in a choice selection screen  |
-| D-Pad Up    | Select second option in a choice selection screen |
-| D-Pad Right | Select third option in a choice selection screen  |
-| A           | Skip to the next picture                          |
-| Select      | Exit the game                                     |
+| Button             | Action                                      |
+|--------------------|---------------------------------------------|
+| D-Pad / Left Stick | Select options in a choice selection screen |
+| A                  | Skip to the next picture / Confirm choice   |
+| Select             | Exit the game                               |
 
 ## Screenshots
 
