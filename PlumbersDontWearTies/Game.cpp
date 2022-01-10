@@ -87,7 +87,7 @@ void Game::Update(const double deltaSeconds)
 			Renderer::LoadPictureFromBMP(baseDataPath, bmpPath);
 
 			currentWaitTimer = picture->duration / 10.0;
-			Log::Print(LogTypes::Info, "Waiting %f seconds...", currentWaitTimer);
+			Log::Print(LogTypes::Info, "Waiting %.2f seconds...", currentWaitTimer);
 
 			currentGameState = GameStates::WaitingPicture;
 			break;
