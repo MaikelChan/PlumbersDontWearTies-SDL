@@ -20,7 +20,7 @@ bool Renderer::Initialize(const std::string fontPath)
 
 	// Initialize SDL video
 
-	screenSurface = SDL_SetVideoMode(640, 480, 16, SDL_DOUBLEBUF);
+	screenSurface = SDL_SetVideoMode(640, 480, 24, SDL_DOUBLEBUF);
 	if (screenSurface == nullptr)
 	{
 		Log::Print(LogTypes::Critical, "Unable to set video mode: %s", SDL_GetError());

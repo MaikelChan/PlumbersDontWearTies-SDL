@@ -29,6 +29,11 @@ bool Audio::Initialize()
 
 	SDL_PauseAudio(0);
 
+	// Workaround for the game sometimes not initializing the audio
+	// quick enough, that causes the intro music to not play on a real Wii.
+
+	SDL_Delay(50);
+
 	return true;
 }
 
