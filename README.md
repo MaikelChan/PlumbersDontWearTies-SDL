@@ -39,7 +39,7 @@ You will need [CMake](https://cmake.org) to build the project.
 | Keyboard      | Controller         | Action                                      |
 |---------------|--------------------|---------------------------------------------|
 | Arrow Keys    | D-Pad / Left Stick | Select options in a choice selection screen |
-| Space / Enter | DPad Right         | Advance to the next picture                 |
+| Space / Enter | A                  | Skip to the next picture / Confirm choice   |
 | Alt+Enter     | Start              | Toggle fullscreen                           |
 | Esc           | Back               | Exit the game                               |
 

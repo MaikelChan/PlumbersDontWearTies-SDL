@@ -152,9 +152,6 @@ void Game::Render()
 
 		if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
 		{
-			float totalSeconds = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
-			uint8_t alpha = static_cast<uint8_t>((sin(totalSeconds * M_PI * 2) * 0.25 + 0.75) * 255);
-
 			_actionDef* action = &scene->actions[currentDecisionIndex];
 			int32_t x = action->cHotspotTopLeft.x;
 			int32_t y = action->cHotspotTopLeft.y;
