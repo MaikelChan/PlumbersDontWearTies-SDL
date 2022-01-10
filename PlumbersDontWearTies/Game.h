@@ -1,23 +1,8 @@
 #pragma once
 
-#include <fstream>
 #include <string>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
-
 #include "GameData.h"
-
-// Format of game's WAV files
-
-#define WAV_FREQUENCY 11025 // Hz
-#define WAV_FORMAT 2 // 2 bytes, 16 bits
-#define WAV_CHANNELS 2 // Stereo
-#define WAV_SAMPLES 256
-
-// TODO: Does audio data in a WAV always start in the same offset?
-
-#define WAV_DATA_START_POSITION 0x2c
 
 enum class GameStates
 {
@@ -32,45 +17,29 @@ enum class GameStates
 class Game
 {
 private:
-	std::string baseDataPath;
-	std::string pathSeparator;
+	std::string baseDataPath = std::string();
 
-	_gameBinFile* gameData;
+	_gameBinFile* gameData = nullptr;
 
-	SDL_Renderer* renderer;
-	int32_t rendererWidth;
-	int32_t rendererHeight;
-
-	SDL_Texture* currentTexture;
-	int32_t currentTextureWidth;
-	int32_t currentTextureHeight;
-
-	TTF_Font* textFont;
-	SDL_Texture* currentTextTexture;
-	int32_t currentTextTextureWidth;
-	int32_t currentTextTextureHeight;
-
-	SDL_AudioDeviceID audioDeviceId;
-	static std::ifstream currentAudioStream;
-	static int32_t currentAudioStreamLegth;
-
-	GameStates currentGameState;
-	int16_t currentSceneIndex;
-	int16_t lastDecisionSceneIndex;
-	int16_t currentPictureIndex;
-	int8_t currentDecisionIndex;
-	int32_t currentScore;
-	double currentWaitTimer;
+	GameStates currentGameState = GameStates::Stopped;
+	int16_t currentSceneIndex = 0;
+	int16_t lastDecisionSceneIndex = 0;
+	int16_t currentPictureIndex = 0;
+	int8_t currentDecisionIndex = -1;
+	int32_t currentScore = 0;
+	double currentWaitTimer = 0.0;
 
 public:
-	Game(SDL_Renderer* renderer);
+	Game(const std::string baseDataPath);
 	~Game();
 
 	void Start();
 	void Stop();
 	void Update(const double deltaSeconds);
-	void WindowSizeChanged(const int32_t width, const int32_t height);
+	void Render();
 	void SelectDecision(const int8_t decisionIndex);
+	void SelectNextDecision();
+	void SelectPreviousDecision();
 	void AdvancePicture();
 
 	inline bool IsRunning() { return currentGameState != GameStates::Stopped; }
@@ -79,10 +48,5 @@ public:
 private:
 	void SetNextScene(const _actionDef* action);
 	int16_t GetSceneIndexFromID(const int16_t id);
-	bool LoadTextureFromBMP(std::string fileName);
-	bool LoadAudioFromWAV(std::string fileName);
-	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
-
-	static void AudioCallback(void* userdata, uint8_t* stream, int32_t len);
 };

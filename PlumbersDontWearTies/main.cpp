@@ -1,8 +1,15 @@
 #include "main.h"
 
+#include "Audio.h"
+#include "Game.h"
+#include "Log.h"
+#include "Renderer.h"
+
 #include <iostream>
 
 #include <switch.h>
+
+constexpr const char* BASE_DATA_PATH = "sdmc:/PlumbersDontWearTies/";
 
 int main(int argc, char** args)
 {
@@ -10,8 +17,8 @@ int main(int argc, char** args)
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
 	{
-		SDL_LogCritical(0, "Error initializing SDL: %s", SDL_GetError());
-		return 1;
+		Log::Print(LogTypes::Critical, "Error initializing SDL: %s", SDL_GetError());
+		return EXIT_FAILURE;
 	}
 
 	// Create window
@@ -20,20 +27,26 @@ int main(int argc, char** args)
 
 	if (window == nullptr)
 	{
-		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
+		Log::Print(LogTypes::Critical, "Could not create a window: %s", SDL_GetError());
 		SDL_Quit();
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// Initialize renderer
 
-	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == nullptr)
+	if (!Renderer::Initialize(window, std::string(BASE_DATA_PATH) + "Font.ttf"))
 	{
-		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
 		SDL_Quit();
-		return 1;
+		return EXIT_FAILURE;
+	}
+
+	// Initialize audio
+
+	if (!Audio::Initialize())
+	{
+		Renderer::Dispose();
+		SDL_Quit();
+		return EXIT_FAILURE;
 	}
 
 	// Initialize game controller
@@ -48,7 +61,7 @@ int main(int argc, char** args)
 
 	// Initialize the game
 
-	Game* game = new Game(renderer);
+	Game* game = new Game(BASE_DATA_PATH);
 	game->Start();
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
@@ -72,14 +85,11 @@ int main(int argc, char** args)
 						case JOY_MINUS:
 							game->Stop();
 							break;
-						case JOY_LEFT:
-							game->SelectDecision(0);
+						case JOY_DOWN:
+							game->SelectNextDecision();
 							break;
 						case JOY_UP:
-							game->SelectDecision(1);
-							break;
-						case JOY_RIGHT:
-							game->SelectDecision(2);
+							game->SelectPreviousDecision();
 							break;
 						case JOY_A:
 							game->AdvancePicture();
@@ -91,25 +101,22 @@ int main(int argc, char** args)
 			}
 		}
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderClear(renderer);
-
 		Uint64 currentTime = SDL_GetPerformanceCounter();
 		double deltaSeconds = (currentTime - previousTime) / (double)SDL_GetPerformanceFrequency();
 		previousTime = currentTime;
 
 		game->Update(deltaSeconds);
-
-		SDL_RenderPresent(renderer);
+		game->Render();
 	}
 
 	delete game;
 	game = nullptr;
 
 	SDL_JoystickClose(joystick);
-	SDL_DestroyRenderer(renderer);
+	Audio::Dispose();
+	Renderer::Dispose();
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
