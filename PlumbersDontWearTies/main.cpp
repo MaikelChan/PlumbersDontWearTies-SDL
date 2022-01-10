@@ -1,9 +1,16 @@
 #include "main.h"
 
+#include "Audio.h"
+#include "Game.h"
+#include "Log.h"
+#include "Renderer.h"
+
 #include <iostream>
 
 #include <gccore.h>
 #include <wiiuse/wpad.h>
+
+constexpr const char* BASE_DATA_PATH = "sd:/apps/PlumbersDontWearTies/Data/";
 
 int main(int argc, char **args)
 {
@@ -11,19 +18,27 @@ int main(int argc, char **args)
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
-		printf("Error initializing SDL: %s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
+		Log::Print(LogTypes::Critical, "Error initializing SDL: %s", SDL_GetError());
+		return EXIT_FAILURE;
 	}
 
 	atexit(SDL_Quit);
 
-	// Initialize video
+	// Initialize renderer
 
-	SDL_Surface *screenSurface = SDL_SetVideoMode(640, 480, 16, SDL_DOUBLEBUF);
-	if (screenSurface == nullptr)
+	if (!Renderer::Initialize(std::string(BASE_DATA_PATH) + "Font.ttf"))
 	{
-		printf("Unable to set video: %s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
+		SDL_Quit();
+		return EXIT_FAILURE;
+	}
+
+	// Initialize audio
+
+	if (!Audio::Initialize())
+	{
+		Renderer::Dispose();
+		SDL_Quit();
+		return EXIT_FAILURE;
 	}
 
 	// Initialize game controller
@@ -34,7 +49,7 @@ int main(int argc, char **args)
 
 	// Initialize the game
 
-	Game *game = new Game(screenSurface);
+	Game *game = new Game(BASE_DATA_PATH);
 	game->Start();
 
 	Uint32 previousTime = SDL_GetTicks();
@@ -62,30 +77,27 @@ int main(int argc, char **args)
 
 		if ((gcButtonsDown & PAD_TRIGGER_Z) || (wiiButtonsDown & WPAD_BUTTON_MINUS))
 			game->Stop();
-		else if ((gcButtonsDown & PAD_BUTTON_B) || (wiiButtonsDown & WPAD_BUTTON_LEFT))
-			game->SelectDecision(0);
-		else if ((gcButtonsDown & PAD_BUTTON_Y) || (wiiButtonsDown & WPAD_BUTTON_UP))
-			game->SelectDecision(1);
-		else if ((gcButtonsDown & PAD_BUTTON_X) || (wiiButtonsDown & WPAD_BUTTON_RIGHT))
-			game->SelectDecision(2);
+		else if ((gcButtonsDown & PAD_BUTTON_DOWN) || (wiiButtonsDown & WPAD_BUTTON_DOWN))
+			game->SelectNextDecision();
+		else if ((gcButtonsDown & PAD_BUTTON_UP) || (wiiButtonsDown & WPAD_BUTTON_UP))
+			game->SelectPreviousDecision();
 		else if ((gcButtonsDown & PAD_BUTTON_A) || (wiiButtonsDown & WPAD_BUTTON_A))
 			game->AdvancePicture();
-
-		SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0, 0, 0));
 
 		Uint32 currentTime = SDL_GetTicks();
 		double deltaSeconds = (currentTime - previousTime) / 1000.0;
 		previousTime = currentTime;
 
 		game->Update(deltaSeconds);
-
-		SDL_Flip(screenSurface);
+		game->Render();
 	}
 
 	delete game;
 	game = nullptr;
 
+	Audio::Dispose();
+	Renderer::Dispose();
 	SDL_Quit();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
