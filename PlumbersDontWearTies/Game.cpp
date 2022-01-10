@@ -5,38 +5,7 @@ int32_t Game::currentAudioStreamLegth = 0;
 
 Game::Game(SDL_Renderer* renderer)
 {
-	// Initialize class variables
-
-	baseDataPath = "Data";
-	pathSeparator = "/";
-	baseDataPath = baseDataPath + pathSeparator;
-
-	gameData = nullptr;
-
 	Game::renderer = renderer;
-	rendererWidth = 0;
-	rendererHeight = 0;
-
-	currentTexture = nullptr;
-	currentTextureWidth = 0;
-	currentTextureHeight = 0;
-
-	textFont = nullptr;
-	currentTextTexture = nullptr;
-	currentTextTextureWidth = 0;
-	currentTextTextureHeight = 0;
-
-	audioDeviceId = 0;
-	currentAudioStream = std::ifstream();
-	currentAudioStreamLegth = 0;
-
-	currentGameState = GameStates::Stopped;
-	currentSceneIndex = 0;
-	lastDecisionSceneIndex = 0;
-	currentPictureIndex = 0;
-	currentDecisionIndex = -1;
-	currentScore = 0;
-	currentWaitTimer = 0.0;
 
 	// Load font
 
@@ -256,42 +225,13 @@ void Game::Render()
 
 	// Render picture
 
-	SDL_Rect textureRect;
-
-	float rendererAspectRatio = static_cast<float>(rendererWidth) / rendererHeight;
-	float textureAspectRatio = static_cast<float>(currentTextureWidth) / currentTextureHeight;
-
-	if (rendererAspectRatio > textureAspectRatio)
-	{
-		int32_t gameWidth = static_cast<int32_t>(rendererHeight * textureAspectRatio);
-		textureRect.x = (rendererWidth - gameWidth) >> 1;
-		textureRect.y = 0;
-		textureRect.w = gameWidth;
-		textureRect.h = rendererHeight;
-	}
-	else
-	{
-		int32_t gameHeight = static_cast<int32_t>(rendererWidth / textureAspectRatio);
-		textureRect.x = 0;
-		textureRect.y = (rendererHeight - gameHeight) >> 1;
-		textureRect.w = rendererWidth;
-		textureRect.h = gameHeight;
-	}
-
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-	SDL_RenderCopy(renderer, currentTexture, NULL, &textureRect);
+	SDL_RenderCopy(renderer, currentTexture, NULL, NULL);
 
 	// Render decision screen
 
 	if (currentGameState == GameStates::WaitingDecision)
 	{
-		float scale;
-
-		if (rendererAspectRatio > textureAspectRatio)
-			scale = static_cast<float>(rendererHeight) / currentTextureHeight;
-		else
-			scale = static_cast<float>(rendererWidth) / currentTextureWidth;
-
 		// Render selection rect
 
 		if (currentDecisionIndex >= 0 && currentDecisionIndex < scene->numActions)
@@ -299,28 +239,28 @@ void Game::Render()
 			float totalSeconds = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
 			uint8_t alpha = static_cast<uint8_t>((sin(totalSeconds * M_PI * 2) * 0.25 + 0.75) * 255);
 
-			SDL_SetRenderDrawColor(renderer, alpha, alpha, alpha, 255);
-			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_MOD);
-
 			SDL_Rect selectionRect;
 			selectionRect.x = scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
 			selectionRect.y = scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
 			selectionRect.w = scene->actions[currentDecisionIndex].cHotspotBottomRigh.x - scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
 			selectionRect.h = scene->actions[currentDecisionIndex].cHotspotBottomRigh.y - scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
-			ScaleRect(&selectionRect, &textureRect, scale);
+			ScaleRect(&selectionRect, viewportScale);
+
+			SDL_SetRenderDrawColor(renderer, alpha, alpha, alpha, 255);
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_MOD);
 			SDL_RenderFillRect(renderer, &selectionRect);
 		}
 
 		// Render text
 
-		scale *= 0.5;
+		float textScale = viewportScale * 0.5f;
 
 		SDL_Rect textRect;
 		textRect.x = 32;
-		textRect.y = static_cast<int32_t>(textureRect.h / scale) - 80;
+		textRect.y = static_cast<int32_t>(viewportRect.h / textScale) - 32 - currentTextTextureHeight;
 		textRect.w = currentTextTextureWidth;
 		textRect.h = currentTextTextureHeight;
-		ScaleRect(&textRect, &textureRect, scale);
+		ScaleRect(&textRect, textScale);
 
 		SDL_RenderCopy(renderer, currentTextTexture, NULL, &textRect);
 	}
@@ -333,7 +273,37 @@ void Game::WindowSizeChanged(const int32_t width, const int32_t height)
 	rendererWidth = width;
 	rendererHeight = height;
 
+	UpdateViewport();
 	SDL_Log("New window size: %ix%i.", width, height);
+}
+
+void Game::UpdateViewport()
+{
+	float rendererAspectRatio = static_cast<float>(rendererWidth) / rendererHeight;
+	float textureAspectRatio = static_cast<float>(currentTextureWidth) / currentTextureHeight;
+
+	if (rendererAspectRatio > textureAspectRatio)
+	{
+		int32_t gameWidth = static_cast<int32_t>(rendererHeight * textureAspectRatio);
+		viewportRect.x = (rendererWidth - gameWidth) >> 1;
+		viewportRect.y = 0;
+		viewportRect.w = gameWidth;
+		viewportRect.h = rendererHeight;
+
+		viewportScale = static_cast<float>(rendererHeight) / currentTextureHeight;
+	}
+	else
+	{
+		int32_t gameHeight = static_cast<int32_t>(rendererWidth / textureAspectRatio);
+		viewportRect.x = 0;
+		viewportRect.y = (rendererHeight - gameHeight) >> 1;
+		viewportRect.w = rendererWidth;
+		viewportRect.h = gameHeight;
+
+		viewportScale = static_cast<float>(rendererWidth) / currentTextureWidth;
+	}
+
+	SDL_RenderSetViewport(renderer, &viewportRect);
 }
 
 void Game::SelectDecision(const int8_t decision)
@@ -503,6 +473,7 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 
 	if (newTexture == nullptr)
 	{
+		SDL_FreeSurface(newSurface);
 		SDL_LogError(0, "Can't create texture: %s", SDL_GetError());
 		return false;
 	}
@@ -512,6 +483,8 @@ bool Game::LoadTextureFromBMP(std::string fileName)
 	currentTexture = newTexture;
 
 	SDL_FreeSurface(newSurface);
+
+	UpdateViewport();
 
 	SDL_Log("Loaded picture %s (%ix%i)", fileName.c_str(), currentTextureWidth, currentTextureHeight);
 
@@ -614,10 +587,10 @@ void Game::ToUpperCase(std::string* text)
 		c = toupper(c);
 }
 
-void Game::ScaleRect(SDL_Rect* rectToScale, const SDL_Rect* textureRect, const float scale)
+void Game::ScaleRect(SDL_Rect* rectToScale, const float scale)
 {
-	rectToScale->x = textureRect->x + static_cast<int32_t>(rectToScale->x * scale);
-	rectToScale->y = textureRect->y + static_cast<int32_t>(rectToScale->y * scale);
+	rectToScale->x = static_cast<int32_t>(rectToScale->x * scale);
+	rectToScale->y = static_cast<int32_t>(rectToScale->y * scale);
 	rectToScale->w = static_cast<int32_t>(rectToScale->w * scale);
 	rectToScale->h = static_cast<int32_t>(rectToScale->h * scale);
 }

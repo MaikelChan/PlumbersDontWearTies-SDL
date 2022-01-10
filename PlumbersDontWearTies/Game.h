@@ -32,35 +32,37 @@ enum class GameStates
 class Game
 {
 private:
-	std::string baseDataPath;
-	std::string pathSeparator;
+	std::string baseDataPath = "Data/";
+	std::string pathSeparator = "/";
 
-	_gameBinFile* gameData;
+	_gameBinFile* gameData = nullptr;
 
-	SDL_Renderer* renderer;
-	int32_t rendererWidth;
-	int32_t rendererHeight;
+	SDL_Renderer* renderer = nullptr;
+	int32_t rendererWidth = 0;
+	int32_t rendererHeight = 0;
+	SDL_Rect viewportRect = {};
+	float viewportScale = 0;
 
-	SDL_Texture* currentTexture;
-	int32_t currentTextureWidth;
-	int32_t currentTextureHeight;
+	SDL_Texture* currentTexture = nullptr;
+	int32_t currentTextureWidth = 0;
+	int32_t currentTextureHeight = 0;
 
-	TTF_Font* textFont;
-	SDL_Texture* currentTextTexture;
-	int32_t currentTextTextureWidth;
-	int32_t currentTextTextureHeight;
+	TTF_Font* textFont = nullptr;
+	SDL_Texture* currentTextTexture = nullptr;
+	int32_t currentTextTextureWidth = 0;
+	int32_t currentTextTextureHeight = 0;
 
-	SDL_AudioDeviceID audioDeviceId;
+	SDL_AudioDeviceID audioDeviceId = 0;
 	static std::ifstream currentAudioStream;
 	static int32_t currentAudioStreamLegth;
 
-	GameStates currentGameState;
-	int16_t currentSceneIndex;
-	int16_t lastDecisionSceneIndex;
-	int16_t currentPictureIndex;
-	int8_t currentDecisionIndex;
-	int32_t currentScore;
-	double currentWaitTimer;
+	GameStates currentGameState = GameStates::Stopped;
+	int16_t currentSceneIndex = 0;
+	int16_t lastDecisionSceneIndex = 0;
+	int16_t currentPictureIndex = 0;
+	int8_t currentDecisionIndex = -1;
+	int32_t currentScore = 0;
+	double currentWaitTimer = 0.0;
 
 public:
 	Game(SDL_Renderer* renderer);
@@ -86,7 +88,8 @@ private:
 	bool LoadAudioFromWAV(std::string fileName);
 	bool PrintText(const std::string text);
 	void ToUpperCase(std::string* text);
-	void ScaleRect(SDL_Rect* rectToScale, const SDL_Rect* textureRect, const float scale);
+	void ScaleRect(SDL_Rect* rectToScale, const float scale);
+	void UpdateViewport();
 
 	static void AudioCallback(void* userdata, uint8_t* stream, int32_t len);
 };
