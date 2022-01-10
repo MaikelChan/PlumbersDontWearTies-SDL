@@ -70,13 +70,11 @@ After a successful build, you will get a file called `PlumbersDontWearTies-SDL.d
 
 ## How to play
 
-| Wii Remote  | GC Pad     | Action                                            |
-|-------------|------------|---------------------------------------------------|
-| D-Pad Left  | B          | Select first option in a choice selection screen  |
-| D-Pad Up    | Y          | Select second option in a choice selection screen |
-| D-Pad Right | X          | Select third option in a choice selection screen  |
-| A           | A          | Skip to the next picture                          |
-| -           | Z          | Exit the game                                     |
+| Wii Remote  | GC Pad     | Action                                       |
+|-------------|------------|----------------------------------------------|
+| D-Pad       | D-Pad      | Select options in a choice selection screen  |
+| A           | A          | Skip to the next picture / Confirm choice    |
+| -           | Z          | Exit the game                                |
 
 ## Screenshots
 
