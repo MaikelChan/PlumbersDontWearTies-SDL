@@ -10,6 +10,8 @@ add_executable (${PROJECT_NAME}
     "GameData.h"
     "main.cpp"
     "main.h"
+    "Renderer.cpp"
+    "Renderer.h"
     ${APP_ICON_RESOURCE_WINDOWS}
 )
 

@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+constexpr char* BASE_DATA_PATH = "Data/";
+
 int main(int argc, char** args)
 {
 	// Initialize SDL
@@ -10,7 +12,7 @@ int main(int argc, char** args)
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		SDL_LogCritical(0, "Error initializing SDL: %s", SDL_GetError());
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// Create window
@@ -22,18 +24,15 @@ int main(int argc, char** args)
 	{
 		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
 		SDL_Quit();
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// Initialize renderer
 
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (renderer == nullptr)
+	if (!Renderer::Initialize(window, std::string(BASE_DATA_PATH) + "Font.ttf"))
 	{
-		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
 		SDL_Quit();
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	// Initialize game controller
@@ -44,7 +43,7 @@ int main(int argc, char** args)
 
 	// Initialize the game
 
-	Game* game = new Game(renderer);
+	Game* game = new Game(BASE_DATA_PATH);
 	game->Start();
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
@@ -163,7 +162,7 @@ int main(int argc, char** args)
 					switch (event.window.event)
 					{
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
-							game->WindowSizeChanged(event.window.data1, event.window.data2);
+							Renderer::WindowSizeChanged(event.window.data1, event.window.data2);
 							break;
 					}
 
@@ -172,17 +171,12 @@ int main(int argc, char** args)
 			}
 		}
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderClear(renderer);
-
 		Uint64 currentTime = SDL_GetPerformanceCounter();
 		double deltaSeconds = (currentTime - previousTime) / (double)SDL_GetPerformanceFrequency();
 		previousTime = currentTime;
 
 		game->Update(deltaSeconds);
 		game->Render();
-
-		SDL_RenderPresent(renderer);
 	}
 
 	delete game;
@@ -194,11 +188,11 @@ int main(int argc, char** args)
 		controller = nullptr;
 	}
 
-	SDL_DestroyRenderer(renderer);
+	Renderer::Dispose();
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 void ToggleFullscreen(SDL_Window* window)
