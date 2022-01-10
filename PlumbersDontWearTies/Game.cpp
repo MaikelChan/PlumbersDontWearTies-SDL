@@ -3,9 +3,10 @@
 #include <fstream>
 
 #include "Audio.h"
+#include "Log.h"
 #include "Renderer.h"
 
-Game::Game(std::string baseDataPath)
+Game::Game(const std::string baseDataPath)
 {
 	Game::baseDataPath = baseDataPath;
 
@@ -15,7 +16,7 @@ Game::Game(std::string baseDataPath)
 
 	if (!gameBinStream.is_open())
 	{
-		SDL_LogCritical(0, "GAME.BIN has not been found.");
+		Log::Print(LogTypes::Critical, "GAME.BIN has not been found.");
 		return;
 	}
 
@@ -67,7 +68,7 @@ void Game::Update(const double deltaSeconds)
 		}
 		case GameStates::BeginScene:
 		{
-			SDL_Log("Entered scene %s.", scene->szSceneFolder);
+			Log::Print(LogTypes::Info, "Entered scene %s.", scene->szSceneFolder);
 
 			std::string wavPath = scene->szSceneFolder + std::string("/") + scene->szDialogWav;
 			ToUpperCase(&wavPath);
@@ -85,7 +86,7 @@ void Game::Update(const double deltaSeconds)
 			Renderer::LoadPictureFromBMP(baseDataPath, bmpPath);
 
 			currentWaitTimer = picture->duration / 10.0;
-			SDL_Log("Waiting %f seconds...", currentWaitTimer);
+			Log::Print(LogTypes::Info, "Waiting %f seconds...", currentWaitTimer);
 
 			currentGameState = GameStates::WaitingPicture;
 			break;
@@ -119,7 +120,7 @@ void Game::Update(const double deltaSeconds)
 
 			Renderer::GenerateScoreText("Your score is: " + std::to_string(currentScore));
 
-			SDL_Log("%i decisions to choose, waiting for player input...", scene->numActions);
+			Log::Print(LogTypes::Info, "%i decisions, waiting for input...", scene->numActions);
 
 			currentDecisionIndex = -1;
 			currentGameState = GameStates::WaitingDecision;
@@ -132,7 +133,7 @@ void Game::Update(const double deltaSeconds)
 		}
 		default:
 		{
-			SDL_LogError(0, "State %i is not implemented.", currentGameState);
+			Log::Print(LogTypes::Error, "State %i is not implemented.", currentGameState);
 			break;
 		}
 	}
@@ -154,10 +155,11 @@ void Game::Render()
 			float totalSeconds = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
 			uint8_t alpha = static_cast<uint8_t>((sin(totalSeconds * M_PI * 2) * 0.25 + 0.75) * 255);
 
-			int32_t x = scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
-			int32_t y = scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
-			int32_t w = scene->actions[currentDecisionIndex].cHotspotBottomRigh.x - scene->actions[currentDecisionIndex].cHotspotTopLeft.x;
-			int32_t h = scene->actions[currentDecisionIndex].cHotspotBottomRigh.y - scene->actions[currentDecisionIndex].cHotspotTopLeft.y;
+			_actionDef* action = &scene->actions[currentDecisionIndex];
+			int32_t x = action->cHotspotTopLeft.x;
+			int32_t y = action->cHotspotTopLeft.y;
+			int32_t w = action->cHotspotBottomRigh.x - action->cHotspotTopLeft.x;
+			int32_t h = action->cHotspotBottomRigh.y - action->cHotspotTopLeft.y;
 
 			Renderer::RenderDecisionSelection(x, y, w, h);
 		}
@@ -236,7 +238,7 @@ void Game::AdvancePicture()
 		if (currentDecisionIndex < 0) return;
 		if (currentDecisionIndex >= scene->numActions) return;
 
-		SDL_Log("Selected decision: %i", currentDecisionIndex + 1);
+		Log::Print(LogTypes::Info, "Selected decision: %i", currentDecisionIndex + 1);
 		Renderer::GenerateScoreText(std::string());
 
 		currentScore += scene->actions[currentDecisionIndex].scoreDelta;
@@ -274,8 +276,6 @@ void Game::SetNextScene(const _actionDef* action)
 
 		nextSceneIndex = GetSceneIndexFromID(id);
 	}
-
-	//SDL_Log("Previous scene %s, index %i", gameData->scenes[currentSceneIndex].szSceneFolder, currentSceneIndex);
 
 	if (gameData->scenes[currentSceneIndex].numActions > 1) lastDecisionSceneIndex = currentSceneIndex;
 	currentSceneIndex = nextSceneIndex;

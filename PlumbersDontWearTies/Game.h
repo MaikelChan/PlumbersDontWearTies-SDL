@@ -30,7 +30,7 @@ private:
 	double currentWaitTimer = 0.0;
 
 public:
-	Game(std::string baseDataPath);
+	Game(const std::string baseDataPath);
 	~Game();
 
 	void Start();

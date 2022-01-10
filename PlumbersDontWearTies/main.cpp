@@ -2,6 +2,7 @@
 
 #include "Audio.h"
 #include "Game.h"
+#include "Log.h"
 #include "Renderer.h"
 
 #include "config.h"
@@ -16,7 +17,7 @@ int main(int argc, char** args)
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
 	{
-		SDL_LogCritical(0, "Error initializing SDL: %s", SDL_GetError());
+		Log::Print(LogTypes::Critical, "Error initializing SDL: %s", SDL_GetError());
 		return EXIT_FAILURE;
 	}
 
@@ -27,7 +28,7 @@ int main(int argc, char** args)
 
 	if (window == nullptr)
 	{
-		SDL_LogCritical(0, "Could not create a window: %s", SDL_GetError());
+		Log::Print(LogTypes::Critical, "Could not create a window: %s", SDL_GetError());
 		SDL_Quit();
 		return EXIT_FAILURE;
 	}
@@ -105,9 +106,9 @@ int main(int argc, char** args)
 							break;
 						case SDLK_RETURN:
 							if (event.key.keysym.mod & KMOD_ALT)
-							{
 								ToggleFullscreen(window);
-							}
+							else
+								game->AdvancePicture();
 							break;
 					}
 
@@ -164,7 +165,7 @@ int main(int argc, char** args)
 						controller = nullptr;
 						controllerInstanceID = -1;
 
-						SDL_Log("Controller has been disconnected: instance ID %i", event.cdevice.which);
+						Log::Print(LogTypes::Info, "Controller has been disconnected: instance ID %i", event.cdevice.which);
 
 						OpenFirstAvailableController();
 					}
@@ -217,12 +218,12 @@ void ToggleFullscreen(SDL_Window* window)
 	if (isFullscreen)
 	{
 		if (SDL_SetWindowFullscreen(window, 0) < 0)
-			SDL_LogError(0, "Can't set the game to window mode: %s", SDL_GetError());
+			Log::Print(LogTypes::Error, "Can't set the game to window mode: %s", SDL_GetError());
 	}
 	else
 	{
 		if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0)
-			SDL_LogError(0, "Can't set the game to full screen mode: %s", SDL_GetError());
+			Log::Print(LogTypes::Error, "Can't set the game to full screen mode: %s", SDL_GetError());
 	}
 }
 
@@ -240,7 +241,7 @@ void OpenFirstAvailableController()
 			SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
 			controllerInstanceID = SDL_JoystickInstanceID(joystick);
 
-			SDL_Log("Found new controller: index %i, instance ID %i, name %s", j, controllerInstanceID, SDL_GameControllerName(controller));
+			Log::Print(LogTypes::Info, "Found new controller: index %i, instance ID %i, name %s.", j, controllerInstanceID, SDL_GameControllerName(controller));
 
 			return;
 		}

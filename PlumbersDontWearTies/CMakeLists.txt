@@ -10,6 +10,8 @@ add_executable (${PROJECT_NAME}
     "Game.cpp"
     "Game.h"
     "GameData.h"
+    "Log.cpp"
+    "Log.h"
     "main.cpp"
     "main.h"
     "Renderer.cpp"

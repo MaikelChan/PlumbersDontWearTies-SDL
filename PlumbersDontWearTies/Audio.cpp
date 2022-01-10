@@ -1,5 +1,7 @@
 #include "Audio.h"
 
+#include "Log.h"
+
 SDL_AudioDeviceID Audio::audioDeviceId = 0;
 std::ifstream Audio::currentAudioStream = std::ifstream();
 int32_t Audio::currentAudioStreamLegth = 0;
@@ -11,7 +13,7 @@ bool Audio::Initialize()
 	SDL_AudioSpec desiredAudioSpec, obtainedAudioSpec;
 	SDL_memset(&desiredAudioSpec, 0, sizeof(desiredAudioSpec));
 	desiredAudioSpec.freq = WAV_FREQUENCY;
-	desiredAudioSpec.format = AUDIO_S16;
+	desiredAudioSpec.format = WAV_FORMAT;
 	desiredAudioSpec.channels = WAV_CHANNELS;
 	desiredAudioSpec.samples = WAV_SAMPLES;
 	desiredAudioSpec.callback = AudioCallback;
@@ -19,12 +21,12 @@ bool Audio::Initialize()
 
 	if (audioDeviceId == 0)
 	{
-		SDL_LogError(0, "Can't open audio device: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't open audio device: %s", SDL_GetError());
 		return false;
 	}
 	else
 	{
-		SDL_Log("Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
+		Log::Print(LogTypes::Info, "Audio Initialized: frequency %i, channels %u, samples %u, buffer size %u.", obtainedAudioSpec.freq, obtainedAudioSpec.channels, obtainedAudioSpec.samples, obtainedAudioSpec.size);
 	}
 
 	SDL_PauseAudioDevice(audioDeviceId, 0);
@@ -53,7 +55,7 @@ bool Audio::LoadAudioFromWAV(const std::string baseDataPath, const std::string f
 
 	if (!currentAudioStream.is_open())
 	{
-		SDL_LogError(0, "Can't load audio file: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't load audio file: %s", SDL_GetError());
 		return false;
 	}
 
@@ -63,7 +65,7 @@ bool Audio::LoadAudioFromWAV(const std::string baseDataPath, const std::string f
 	// TODO: Does audio data in a WAV always start in the same offset?
 	currentAudioStream.seekg(WAV_DATA_START_POSITION, std::ios_base::beg);
 
-	SDL_Log("Playing audio %s...", fileName.c_str());
+	Log::Print(LogTypes::Info, "Playing audio %s...", fileName.c_str());
 
 	return true;
 }
@@ -82,7 +84,7 @@ void Audio::SetAudioPlaybackTime(const double elapsedTime)
 	if (!IsInitialized()) return;
 	if (!currentAudioStream.is_open()) return;
 
-	int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT * WAV_CHANNELS);
+	int32_t samplePosition = static_cast<int32_t>(elapsedTime * WAV_FREQUENCY * WAV_FORMAT_BYTES * WAV_CHANNELS);
 
 	// Make sure samplePosition is even, not odd, as audio is 16bit.
 	samplePosition &= ~1;

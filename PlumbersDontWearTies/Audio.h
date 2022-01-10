@@ -7,7 +7,8 @@
 // Format of game's WAV files
 
 constexpr int32_t WAV_FREQUENCY = 11025; // Hz
-constexpr int32_t WAV_FORMAT = 2; // 2 bytes, 16 bits
+constexpr SDL_AudioFormat WAV_FORMAT = AUDIO_S16; // 16 bits
+constexpr int32_t WAV_FORMAT_BYTES = 2; // 16 bits
 constexpr int32_t WAV_CHANNELS = 2; // Stereo
 constexpr int32_t WAV_SAMPLES = 256;
 

@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include "Log.h"
+
 SDL_Window* Renderer::window = nullptr;
 SDL_Renderer* Renderer::renderer = nullptr;
 
@@ -27,7 +29,7 @@ bool Renderer::Initialize(SDL_Window* window, const std::string fontPath)
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{
-		SDL_LogCritical(0, "Could not create a renderer: %s", SDL_GetError());
+		Log::Print(LogTypes::Critical, "Could not create a renderer: %s", SDL_GetError());
 		return false;
 	}
 
@@ -37,9 +39,11 @@ bool Renderer::Initialize(SDL_Window* window, const std::string fontPath)
 	if (SDL_GetRendererOutputSize(renderer, &rw, &rh) < 0)
 	{
 		Dispose();
-		SDL_LogCritical(0, "Could not get renderer output size: %s", SDL_GetError());
+		Log::Print(LogTypes::Critical, "Could not get renderer output size: %s", SDL_GetError());
 		return false;
 	}
+
+	Log::Print(LogTypes::Info, "Renderer initialized: resolution %ix%i.", rw, rh);
 
 	WindowSizeChanged(rw, rh);
 
@@ -47,13 +51,13 @@ bool Renderer::Initialize(SDL_Window* window, const std::string fontPath)
 
 	if (TTF_Init() < 0)
 	{
-		SDL_LogError(0, "TTF has not been initialized: %s", TTF_GetError());
+		Log::Print(LogTypes::Error, "TTF has not been initialized: %s", TTF_GetError());
 	}
 
 	textFont = TTF_OpenFont(fontPath.c_str(), 48);
 	if (textFont == nullptr)
 	{
-		SDL_LogError(0, "%s has not been found or couldn't be opened: %s", fontPath.c_str(), TTF_GetError());
+		Log::Print(LogTypes::Error, "%s has not been found or couldn't be opened: %s", fontPath.c_str(), TTF_GetError());
 	}
 
 	return true;
@@ -151,7 +155,7 @@ void Renderer::WindowSizeChanged(const int32_t width, const int32_t height)
 	rendererHeight = height;
 
 	UpdateViewport();
-	SDL_Log("New window size: %ix%i.", width, height);
+	Log::Print(LogTypes::Info, "New window size: %ix%i.", width, height);
 }
 
 bool Renderer::LoadPictureFromBMP(const std::string baseDataPath, std::string fileName)
@@ -168,7 +172,7 @@ bool Renderer::LoadPictureFromBMP(const std::string baseDataPath, std::string fi
 
 	if (newSurface == nullptr)
 	{
-		SDL_LogError(0, "Can't load bitmap: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't load bitmap: %s", SDL_GetError());
 		return false;
 	}
 
@@ -178,7 +182,7 @@ bool Renderer::LoadPictureFromBMP(const std::string baseDataPath, std::string fi
 	if (newTexture == nullptr)
 	{
 		SDL_FreeSurface(newSurface);
-		SDL_LogError(0, "Can't create texture: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't create texture: %s", SDL_GetError());
 		return false;
 	}
 
@@ -190,7 +194,7 @@ bool Renderer::LoadPictureFromBMP(const std::string baseDataPath, std::string fi
 
 	UpdateViewport();
 
-	SDL_Log("Loaded picture %s (%ix%i)", fileName.c_str(), currentTextureWidth, currentTextureHeight);
+	Log::Print(LogTypes::Info, "Loaded picture %s (%ix%i)", fileName.c_str(), currentTextureWidth, currentTextureHeight);
 
 	return true;
 }
@@ -216,7 +220,7 @@ bool Renderer::GenerateScoreText(const std::string text)
 
 	if (textFont == nullptr)
 	{
-		SDL_Log("%s", cText);
+		Log::Print(LogTypes::Info, "%s", cText);
 		return false;
 	}
 
@@ -225,7 +229,7 @@ bool Renderer::GenerateScoreText(const std::string text)
 
 	if (textSurface == nullptr)
 	{
-		SDL_LogError(0, "Can't create text surface: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't create text surface: %s", SDL_GetError());
 		return false;
 	}
 
@@ -235,7 +239,7 @@ bool Renderer::GenerateScoreText(const std::string text)
 
 	if (textTexture == nullptr)
 	{
-		SDL_LogError(0, "Can't create text texture: %s", SDL_GetError());
+		Log::Print(LogTypes::Error, "Can't create text texture: %s", SDL_GetError());
 		return false;
 	}
 
@@ -243,7 +247,7 @@ bool Renderer::GenerateScoreText(const std::string text)
 	if (TTF_SizeText(textFont, cText, &w, &h) < 0)
 	{
 		SDL_DestroyTexture(textTexture);
-		SDL_LogError(0, "Can't calculate size of text texture: %s", TTF_GetError());
+		Log::Print(LogTypes::Error, "Can't calculate size of text texture: %s", TTF_GetError());
 		return false;
 	}
 
