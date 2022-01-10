@@ -2,9 +2,6 @@
 
 #include <SDL.h>
 
-#include "Game.h"
-#include "Renderer.h"
-
 SDL_GameController* controller;
 SDL_JoystickID controllerInstanceID;
 

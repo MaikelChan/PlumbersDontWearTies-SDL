@@ -26,7 +26,7 @@ private:
 	static int32_t currentTextTextureHeight;
 
 public:
-	static bool Initialize(SDL_Window* window, std::string fontPath);
+	static bool Initialize(SDL_Window* window, const std::string fontPath);
 	static void Dispose();
 
 	static void Clear(const uint8_t r, const uint8_t g, const uint8_t b);

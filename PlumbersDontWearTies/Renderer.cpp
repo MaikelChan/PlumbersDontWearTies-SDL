@@ -17,7 +17,7 @@ SDL_Texture* Renderer::currentTextTexture = nullptr;
 int32_t Renderer::currentTextTextureWidth = 0;
 int32_t Renderer::currentTextTextureHeight = 0;
 
-bool Renderer::Initialize(SDL_Window* window, std::string fontPath)
+bool Renderer::Initialize(SDL_Window* window, const std::string fontPath)
 {
 	if (IsInitialized()) return false;
 

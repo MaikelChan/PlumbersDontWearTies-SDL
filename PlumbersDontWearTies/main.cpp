@@ -1,4 +1,9 @@
 #include "main.h"
+
+#include "Audio.h"
+#include "Game.h"
+#include "Renderer.h"
+
 #include "config.h"
 
 #include <iostream>
@@ -31,6 +36,15 @@ int main(int argc, char** args)
 
 	if (!Renderer::Initialize(window, std::string(BASE_DATA_PATH) + "Font.ttf"))
 	{
+		SDL_Quit();
+		return EXIT_FAILURE;
+	}
+
+	// Initialize audio
+
+	if (!Audio::Initialize())
+	{
+		Renderer::Dispose();
 		SDL_Quit();
 		return EXIT_FAILURE;
 	}
@@ -188,6 +202,7 @@ int main(int argc, char** args)
 		controller = nullptr;
 	}
 
+	Audio::Dispose();
 	Renderer::Dispose();
 	SDL_DestroyWindow(window);
 	SDL_Quit();
