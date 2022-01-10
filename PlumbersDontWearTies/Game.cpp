@@ -23,6 +23,7 @@ Game::Game(const std::string baseDataPath)
 	gameData = new _gameBinFile;
 	gameBinStream.read((char*)gameData, sizeof(_gameBinFile));
 	gameBinStream.close();
+	gameData->SwapEndianness();
 }
 
 Game::~Game()
