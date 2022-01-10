@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-constexpr char* BASE_DATA_PATH = "Data/";
+constexpr const char* BASE_DATA_PATH = "Data/";
 
 int main(int argc, char** args)
 {
