@@ -62,7 +62,6 @@ bool Audio::LoadAudioFromWAV(const std::string baseDataPath, const std::string f
 	currentAudioStream.seekg(0, std::ios_base::end);
 	currentAudioStreamLegth = static_cast<int32_t>(currentAudioStream.tellg());
 
-	// TODO: Does audio data in a WAV always start in the same offset?
 	currentAudioStream.seekg(WAV_DATA_START_POSITION, std::ios_base::beg);
 
 	Log::Print(LogTypes::Info, "Playing audio %s...", fileName.c_str());

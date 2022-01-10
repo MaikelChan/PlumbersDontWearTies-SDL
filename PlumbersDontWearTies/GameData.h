@@ -71,6 +71,11 @@ struct _gameBinFile
 	int16_t     unknown2[2];
 	_sceneDef   scenes[100];       // Scenes start at file position 0x0016
 	_pictureDef pictures[2000];    // Pictures start at file position 0x2596
+
+	void SwapEndianness()
+	{
+
+	}
 };
 
 #pragma pack(pop)
