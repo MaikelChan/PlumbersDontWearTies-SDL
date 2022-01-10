@@ -5,7 +5,7 @@
 #include "Log.h"
 #include "Renderer.h"
 
-#include "config.h"
+#include "Config.h"
 
 #include <iostream>
 

@@ -8,9 +8,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin)
 
 set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_LIST_DIR}/resources.rc")
 
-project ("PlumbersDontWearTies" VERSION "0.1.0")
+project ("PlumbersDontWearTies" VERSION "0.2.0")
 
-configure_file("${CMAKE_CURRENT_LIST_DIR}/PlumbersDontWearTies/config.h.in" "${CMAKE_CURRENT_LIST_DIR}/PlumbersDontWearTies/config.h")
+configure_file("${CMAKE_CURRENT_LIST_DIR}/PlumbersDontWearTies/Config.h.in" "${CMAKE_CURRENT_LIST_DIR}/PlumbersDontWearTies/Config.h")
 
 if(MSVC)
     set(SDL2_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/SDL2/include)

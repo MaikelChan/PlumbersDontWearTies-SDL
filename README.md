@@ -36,14 +36,12 @@ You will need [CMake](https://cmake.org) to build the project.
 
 ## How to play
 
-| Keyboard    | Controller | Action                                            |
-|-------------|------------|---------------------------------------------------|
-| 1           | X          | Select first option in a choice selection screen  |
-| 2           | Y          | Select second option in a choice selection screen |
-| 3           | B          | Select third option in a choice selection screen  |
-| Right Arrow | DPad Right | Advance to the next picture                       |
-| Alt+Enter   | Start      | Toggle fullscreen                                 |
-| Esc         | Back       | Exit the game                                     |
+| Keyboard      | Controller         | Action                                      |
+|---------------|--------------------|---------------------------------------------|
+| Arrow Keys    | D-Pad / Left Stick | Select options in a choice selection screen |
+| Space / Enter | DPad Right         | Advance to the next picture                 |
+| Alt+Enter     | Start              | Toggle fullscreen                           |
+| Esc           | Back               | Exit the game                               |
 
 ## Screenshots
 
