@@ -25,9 +25,10 @@ target_link_libraries(${PROJECT_NAME} ${SDL2_LIBS})
 
 if(MSVC)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_LIB_DIRS}/libfreetype-6.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_LIB_DIRS}/SDL2.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_LIB_DIRS}/SDL2_ttf.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_LIB_DIRS}/libfreetype-6.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_LIB_DIRS}/zlib1.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/Data
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_LIST_DIR}/../Font.ttf" $<TARGET_FILE_DIR:${PROJECT_NAME}>/Data
     )
