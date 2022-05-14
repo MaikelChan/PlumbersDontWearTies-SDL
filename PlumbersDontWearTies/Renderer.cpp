@@ -114,7 +114,7 @@ void Renderer::RenderDecisionSelection(const int32_t selectionX, const int32_t s
 {
 	if (!IsInitialized()) return;
 
-	float totalSeconds = SDL_GetPerformanceCounter() / (float)SDL_GetPerformanceFrequency();
+	double totalSeconds = SDL_GetPerformanceCounter() / (double)SDL_GetPerformanceFrequency();
 	uint8_t alpha = static_cast<uint8_t>((sin(totalSeconds * M_PI * 2) * 0.25 + 0.75) * 255);
 
 	SDL_Rect selectionRect = { selectionX,  selectionY, selectionW,  selectionH };
