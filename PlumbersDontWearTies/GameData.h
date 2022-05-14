@@ -21,6 +21,8 @@
 
 #include <cstdint>
 
+#include "utils.h"
+
 #define SCENEID_PREVDECISION -1
 #define SCENEID_ENDGAME 32767
 
@@ -31,51 +33,81 @@
 
 struct _coord
 {
-	int16_t     x;
-	int16_t     y;
+    int16_t     x;
+    int16_t     y;
 };
 
 struct _actionDef
 {
-	int32_t     scoreDelta;
-	int16_t     nextSceneID;       // will jump to the scene with the name "SCxx", where xx stands for nextSceneID (2 digits at least)
-								   // 7FFF (32767) = end game
-								   // FFFF (   -1) = go back to the last decision
-	int16_t     sceneSegment;      // 0 = scene from beginning, 1 = decision page
-	_coord      cHotspotTopLeft;
-	_coord      cHotspotBottomRigh;
+    int32_t     scoreDelta;
+    int16_t     nextSceneID;       // will jump to the scene with the name "SCxx", where xx stands for nextSceneID (2 digits at least)
+                                   // 7FFF (32767) = end game
+                                   // FFFF (   -1) = go back to the last decision
+    int16_t     sceneSegment;      // 0 = scene from beginning, 1 = decision page
+    _coord      cHotspotTopLeft;
+    _coord      cHotspotBottomRigh;
 };
 
 struct _sceneDef
 {
-	int16_t     numPics;
-	int16_t     pictureIndex;
-	int16_t     numActions;
-	char        szSceneFolder[14]; // Foldername *must* be "SCxx" (case sensitive) where xx stands for a 2 digit ID
-	char        szDialogWav[14];
-	char        szDecisionBmp[14];
-	_actionDef  actions[3];
+    int16_t     numPics;
+    int16_t     pictureIndex;
+    int16_t     numActions;
+    char        szSceneFolder[14]; // Foldername *must* be "SCxx" (case sensitive) where xx stands for a 2 digit ID
+    char        szDialogWav[14];
+    char        szDecisionBmp[14];
+    _actionDef  actions[3];
 };
 
 struct _pictureDef
 {
-	int16_t     duration;          // deciseconds
-	char        szBitmapFile[14];
+    int16_t     duration;          // deciseconds
+    char        szBitmapFile[14];
 };
 
 struct _gameBinFile
 {
-	int16_t     unknown1[7];
-	int16_t     numScenes;
-	int16_t     numPics;
-	int16_t     unknown2[2];
-	_sceneDef   scenes[100];       // Scenes start at file position 0x0016
-	_pictureDef pictures[2000];    // Pictures start at file position 0x2596
+    int16_t     unknown1[7];
+    int16_t     numScenes;
+    int16_t     numPics;
+    int16_t     unknown2[2];
+    _sceneDef   scenes[100];       // Scenes start at file position 0x0016
+    _pictureDef pictures[2000];    // Pictures start at file position 0x2596
 
-	void SwapEndianness()
-	{
+    void SwapEndianness()
+    {
+        for (int u = 0; u < 7; u++)
+            unknown1[u] = utils::swap_i16(unknown1[u]);
 
-	}
+        numScenes = utils::swap_i16(numScenes);
+        numPics = utils::swap_i16(numPics);
+
+        for (int u = 0; u < 2; u++)
+            unknown2[u] = utils::swap_i16(unknown2[u]);
+
+        for (int s = 0; s < 100; s++)
+        {
+            scenes[s].numPics = utils::swap_i16(scenes[s].numPics);
+            scenes[s].pictureIndex = utils::swap_i16(scenes[s].pictureIndex);
+            scenes[s].numActions = utils::swap_i16(scenes[s].numActions);
+
+            for (int a = 0; a < 3; a++)
+            {
+                scenes[s].actions[a].scoreDelta = utils::swap_i32(scenes[s].actions[a].scoreDelta);
+                scenes[s].actions[a].nextSceneID = utils::swap_i16(scenes[s].actions[a].nextSceneID);
+                scenes[s].actions[a].sceneSegment = utils::swap_i16(scenes[s].actions[a].sceneSegment);
+                scenes[s].actions[a].cHotspotTopLeft.x = utils::swap_i16(scenes[s].actions[a].cHotspotTopLeft.x);
+                scenes[s].actions[a].cHotspotTopLeft.y = utils::swap_i16(scenes[s].actions[a].cHotspotTopLeft.y);
+                scenes[s].actions[a].cHotspotBottomRigh.x = utils::swap_i16(scenes[s].actions[a].cHotspotBottomRigh.x);
+                scenes[s].actions[a].cHotspotBottomRigh.y = utils::swap_i16(scenes[s].actions[a].cHotspotBottomRigh.y);
+            }
+        }
+
+        for (int p = 0; p < 2000; p++)
+        {
+            pictures[p].duration = utils::swap_i16(pictures[p].duration);
+        }
+    }
 };
 
 #pragma pack(pop)

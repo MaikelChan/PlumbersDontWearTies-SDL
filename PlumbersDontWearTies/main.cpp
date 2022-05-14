@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include <switch.h>
+//#include <switch.h>
 
 constexpr const char* BASE_DATA_PATH = "sdmc:/PlumbersDontWearTies/";
 
@@ -66,7 +66,7 @@ int main(int argc, char** args)
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
 
-	while (game->IsRunning() && appletMainLoop())
+	while (game->IsRunning())
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))

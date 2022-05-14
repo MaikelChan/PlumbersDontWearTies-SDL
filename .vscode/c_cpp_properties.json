@@ -1,17 +1,18 @@
 {
     "configurations": [
         {
-            "name": "Switch",
+            "name": "WiiU",
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/PlumbersDontWearTies/",
-                "${DEVKITPRO}/libnx/**",
-                "${DEVKITPRO}/portlibs/switch/include/**"
+                "${DEVKITPRO}/wut/include/**",
+                "${DEVKITPRO}/portlibs/wiiu/include/**"
             ],
             "defines": [
-                "__SWITCH__"
+                "__WIIU__",
+                "__WUT__"
             ],
-            "compilerPath": "${DEVKITPRO}/devkitA64/bin/aarch64-none-elf-g++",
+            "compilerPath": "${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-g++",
             "compilerArgs": []
         }
     ],

@@ -1,6 +1,6 @@
 #include "Log.h"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 void Log::Print(LogTypes type, const char* message, ...)
 {

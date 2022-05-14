@@ -19,7 +19,6 @@ CMakeSettings.json
 # Dependencies
 SDL2/
 
-# Switch
+# WiiU
 *.elf
-*.nacp
-*.nro
+*.rpx
