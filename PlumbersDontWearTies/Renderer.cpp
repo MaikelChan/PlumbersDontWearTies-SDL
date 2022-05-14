@@ -25,7 +25,6 @@ bool Renderer::Initialize(SDL_Window* window, const std::string fontPath)
 
 	// Initialize SDL renderer
 
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2");
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{

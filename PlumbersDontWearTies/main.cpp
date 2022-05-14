@@ -7,9 +7,8 @@
 
 #include <iostream>
 
-//#include <switch.h>
-
-constexpr const char* BASE_DATA_PATH = "sdmc:/PlumbersDontWearTies/";
+#include <whb/proc.h>
+#include <whb/sdcard.h>
 
 int main(int argc, char** args)
 {
@@ -23,7 +22,7 @@ int main(int argc, char** args)
 
 	// Create window
 
-	SDL_Window* window = SDL_CreateWindow("Plumbers Don't Wear Ties", 0, 0, 1920, 1080, 0);
+	SDL_Window* window = SDL_CreateWindow("Plumbers Don't Wear Ties", 0, 0, 1280, 720, 0);
 
 	if (window == nullptr)
 	{
@@ -32,9 +31,23 @@ int main(int argc, char** args)
 		return EXIT_FAILURE;
 	}
 
+	// Initialize SD card
+
+	if (!WHBMountSdCard())
+	{
+		Log::Print(LogTypes::Critical, "Could not mount SD card.");
+		SDL_Quit();
+		return EXIT_FAILURE;
+	}
+
+	char *sdRootPath = WHBGetSdCardMountPath();
+	Log::Print(LogTypes::Info, "SD root path: %s", sdRootPath);
+	char path[256];
+	sprintf(path, "%s/PlumbersDontWearTies/", sdRootPath);
+
 	// Initialize renderer
 
-	if (!Renderer::Initialize(window, std::string(BASE_DATA_PATH) + "Font.ttf"))
+	if (!Renderer::Initialize(window, std::string(path) + "Font.ttf"))
 	{
 		SDL_Quit();
 		return EXIT_FAILURE;
@@ -61,12 +74,12 @@ int main(int argc, char** args)
 
 	// Initialize the game
 
-	Game* game = new Game(BASE_DATA_PATH);
+	Game* game = new Game(std::string(path));
 	game->Start();
 
 	Uint64 previousTime = SDL_GetPerformanceCounter();
 
-	while (game->IsRunning())
+	while (game->IsRunning() && WHBProcIsRunning())
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
@@ -86,9 +99,11 @@ int main(int argc, char** args)
 							game->Stop();
 							break;
 						case JOY_DOWN:
+						case DPAD_DOWN:
 							game->SelectNextDecision();
 							break;
 						case JOY_UP:
+						case DPAD_UP:
 							game->SelectPreviousDecision();
 							break;
 						case JOY_A:
@@ -115,6 +130,7 @@ int main(int argc, char** args)
 	SDL_JoystickClose(joystick);
 	Audio::Dispose();
 	Renderer::Dispose();
+	WHBUnmountSdCard();
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
